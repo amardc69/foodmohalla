@@ -1,0 +1,86 @@
+import Link from "next/link";
+
+export default function CustomerFooter() {
+  return (
+    <footer className="border-t border-slate-200 bg-white pt-16 pb-8 px-4 md:px-10 lg:px-40">
+      <div className="flex flex-col md:flex-row justify-between gap-10 mb-12">
+        <div className="flex flex-col gap-4 max-w-sm">
+          <div className="flex items-center gap-2 text-primary">
+            <span className="material-symbols-outlined !text-3xl">
+              restaurant_menu
+            </span>
+            <span className="text-slate-900 text-xl font-extrabold">
+              Food Mohalla
+            </span>
+          </div>
+          <p className="text-slate-500 text-sm leading-relaxed">
+            Food Mohalla is the leading food delivery service dedicated to
+            bringing you the best local flavors right to your doorstep.
+          </p>
+          <div className="flex gap-4 mt-2">
+            <a
+              className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-primary hover:text-white transition-colors"
+              href="#"
+            >
+              <span className="material-symbols-outlined !text-lg">public</span>
+            </a>
+            <a
+              className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-primary hover:text-white transition-colors"
+              href="#"
+            >
+              <span className="material-symbols-outlined !text-lg">share</span>
+            </a>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-8 md:gap-16">
+          <div className="flex flex-col gap-4">
+            <h3 className="text-slate-900 font-bold">Company</h3>
+            <div className="flex flex-col gap-2">
+              <Link className="text-slate-500 hover:text-primary text-sm" href="#">
+                About Us
+              </Link>
+              <Link className="text-slate-500 hover:text-primary text-sm" href="#">
+                Careers
+              </Link>
+              <Link className="text-slate-500 hover:text-primary text-sm" href="#">
+                Team
+              </Link>
+            </div>
+          </div>
+          <div className="flex flex-col gap-4">
+            <h3 className="text-slate-900 font-bold">Support</h3>
+            <div className="flex flex-col gap-2">
+              <Link className="text-slate-500 hover:text-primary text-sm" href="#">
+                Help Center
+              </Link>
+              <Link className="text-slate-500 hover:text-primary text-sm" href="#">
+                Terms of Service
+              </Link>
+              <Link className="text-slate-500 hover:text-primary text-sm" href="#">
+                Privacy Policy
+              </Link>
+            </div>
+          </div>
+          <div className="flex flex-col gap-4 col-span-2 md:col-span-1">
+            <h3 className="text-slate-900 font-bold">Contact</h3>
+            <div className="flex flex-col gap-2">
+              <p className="text-slate-500 text-sm">support@foodmohalla.com</p>
+              <p className="text-slate-500 text-sm">+1 (555) 123-4567</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="border-t border-slate-100 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
+        <p className="text-slate-400 text-sm">
+          © 2025 Food Mohalla. All rights reserved.
+        </p>
+        <div className="flex gap-6 items-center">
+          <Link href="/auth/signin" className="text-slate-400 hover:text-primary text-xs transition-colors">
+            Admin Login
+          </Link>
+          <p className="text-slate-400 text-xs">Made with love for food.</p>
+        </div>
+      </div>
+    </footer>
+  );
+}

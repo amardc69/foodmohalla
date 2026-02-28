@@ -1,0 +1,87 @@
+import { defineSchema, defineTable } from "convex/server";
+import { v } from "convex/values";
+
+export default defineSchema({
+  menuItems: defineTable({
+    id: v.string(),
+    name: v.string(),
+    description: v.string(),
+    price: v.number(),
+    image: v.string(),
+    category: v.string(),
+    rating: v.number(),
+    isVeg: v.boolean(),
+    isHot: v.optional(v.boolean()),
+    badge: v.optional(v.string()),
+    addons: v.optional(v.array(v.object({ name: v.string(), price: v.number() }))),
+    discount: v.optional(v.number()), // discount percentage or flat value
+    isOutOfStock: v.optional(v.boolean()),
+    isBestSeller: v.optional(v.boolean()),
+    isFeatured: v.optional(v.boolean()),
+  }).index("by_menu_item_id", ["id"]).index("by_category", ["category"]),
+
+  categories: defineTable({
+    name: v.string(),
+    slug: v.string(),
+    description: v.string(),
+    image: v.string(),
+    icon: v.string(),
+  }).index("by_slug", ["slug"]),
+
+  offers: defineTable({
+    code: v.string(),
+    description: v.string(),
+    discountType: v.string(), // "percentage" or "flat"
+    discountValue: v.number(),
+    minOrderValue: v.optional(v.number()),
+    maxDiscount: v.optional(v.number()),
+    validUntil: v.optional(v.number()), // timestamp
+    usageLimitPerUser: v.optional(v.number()), // how many times a single user can use it
+    isActive: v.boolean(),
+  }).index("by_code", ["code"]),
+
+  orders: defineTable({
+    customer: v.object({
+      name: v.string(),
+      avatar: v.string(),
+    }),
+    items: v.array(
+      v.object({
+        menuItemId: v.string(),
+        name: v.string(),
+        quantity: v.number(),
+        price: v.number(),
+        addons: v.optional(v.array(v.any())),
+        instructions: v.optional(v.array(v.string())),
+      })
+    ),
+    status: v.string(), // "Pending", "Preparing", "Out for Delivery", "Delivered"
+    totalPrice: v.number(),
+  }).index("by_status", ["status"]),
+
+  addresses: defineTable({
+    id: v.string(),
+    label: v.string(),
+    icon: v.string(),
+    address: v.string(),
+    deliveryTime: v.string(),
+    isSelected: v.boolean(),
+  }),
+
+  carts: defineTable({
+    userId: v.string(), // Use sessionId for guests or userId for logged in
+    menuItemId: v.string(),
+    quantity: v.number(),
+    addons: v.optional(v.array(v.any())),
+    instructions: v.optional(v.array(v.string())),
+  }).index("by_user", ["userId"]),
+
+  users: defineTable({
+    name: v.string(),
+    username: v.string(),
+    password: v.string(), // hashed in production, plain text for demo
+    phone: v.string(),
+    role: v.string(), // "admin" | "customer"
+    avatar: v.optional(v.string()),
+  }).index("by_username", ["username"]),
+});
