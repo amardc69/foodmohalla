@@ -33,7 +33,7 @@ function SignInForm() {
   // Protect route
   useEffect(() => {
     if (status === "authenticated") {
-      if (session?.user?.role === "admin") {
+      if ((session?.user as any)?.role === "admin") {
         router.push("/admin");
       } else {
         router.push(customerRedirect);
