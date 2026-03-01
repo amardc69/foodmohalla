@@ -118,6 +118,10 @@ export const createOrder = mutation({
     ),
     totalPrice: v.number(),
     userId: v.optional(v.string()),
+    paymentMethod: v.optional(v.string()),
+    appliedCoupon: v.optional(v.string()),
+    discountAmount: v.optional(v.number()),
+    deliveryAddress: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const orderId = await ctx.db.insert("orders", {
@@ -128,8 +132,34 @@ export const createOrder = mutation({
       items: args.items,
       status: "Pending",
       totalPrice: args.totalPrice,
+      paymentMethod: args.paymentMethod,
+      appliedCoupon: args.appliedCoupon,
+      discountAmount: args.discountAmount,
+      deliveryAddress: args.deliveryAddress,
+      userId: args.userId,
     });
 
     return orderId;
+  },
+});
+
+export const getUserOrders = query({
+  args: {
+    userId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const orders = await ctx.db
+      .query("orders")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .order("desc")
+      .collect();
+
+    return orders.map((o) => ({
+      ...o,
+      displayId: formatOrderId(o._id),
+      timeAgo: formatTimeAgo(o._creationTime),
+      itemsSummary: formatItemsSummary(o.items),
+      displayPrice: `₹${o.totalPrice.toFixed(2)}`,
+    }));
   },
 });

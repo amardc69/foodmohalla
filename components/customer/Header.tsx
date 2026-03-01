@@ -104,7 +104,7 @@ export default function CustomerHeader() {
                 <DropdownMenuItem asChild className="rounded-xl focus:bg-primary/5 focus:text-primary cursor-pointer">
                   <Link href="/orders" className="flex items-center gap-2 w-full px-2 py-2">
                     <span className="material-symbols-outlined text-[18px]">receipt_long</span>
-                    <span className="font-semibold text-sm">Valid Orders</span>
+                    <span className="font-semibold text-sm">My Orders</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator className="my-1 bg-slate-100" />

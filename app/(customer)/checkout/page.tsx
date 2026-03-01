@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useQuery, useMutation } from "convex/react";
+import { useQuery, useMutation, useConvex } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useSession } from "next-auth/react";
 import { useCartUserId } from "@/lib/useGuestId";
@@ -26,6 +26,36 @@ export default function CheckoutPage() {
   
   const cart = cartQuery || [];
 
+  const updateCartItem = useMutation(api.cart.updateCartItem);
+  const clearCart = useMutation(api.cart.clearCart);
+  const createOrder = useMutation(api.orders.createOrder);
+
+  const addressesDb = useQuery(api.addresses.getAddresses) || [];
+  const selectAddressMutation = useMutation(api.addresses.selectAddress);
+  
+  const selectedAddress = addressesDb.find((a: any) => a.isSelected) || addressesDb[0];
+
+  const [selectedPayment, setSelectedPayment] = useState("cod");
+  const [isPlacing, setIsPlacing] = useState(false);
+  const [coupon, setCoupon] = useState("");
+  const [couponError, setCouponError] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
+  const [discountAmount, setDiscountAmount] = useState(0);
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
+  const [locationError, setLocationError] = useState("");
+  
+  // Custom Address Form States
+  const [showAddressForm, setShowAddressForm] = useState(false);
+  const [newFlat, setNewFlat] = useState("");
+  const [newLandmark, setNewLandmark] = useState("");
+  const [newAddress, setNewAddress] = useState("");
+  const [newLabel, setNewLabel] = useState("Home");
+  const [newLat, setNewLat] = useState<number | undefined>(undefined);
+  const [newLng, setNewLng] = useState<number | undefined>(undefined);
+
+  const convex = useConvex();
+  const addAddressMutation = useMutation(api.addresses.addAddress);
+
   // Show loading while checking auth
   if (status === "loading") {
     return (
@@ -39,30 +69,112 @@ export default function CheckoutPage() {
     return null; // Will redirect
   }
 
-  const updateCartItem = useMutation(api.cart.updateCartItem);
-  const clearCart = useMutation(api.cart.clearCart);
-  const createOrder = useMutation(api.orders.createOrder);
-
-  const addressesDb = useQuery(api.addresses.getAddresses) || [];
-  const selectAddressMutation = useMutation(api.addresses.selectAddress);
-  
-  const selectedAddress = addressesDb.find((a: any) => a.isSelected) || addressesDb[0];
-
-  const [selectedPayment, setSelectedPayment] = useState("card");
-  const [isPlacing, setIsPlacing] = useState(false);
-  const [coupon, setCoupon] = useState("");
-  const [couponError, setCouponError] = useState("");
-
   async function updateQuantity(cartItemId: any, quantity: number) {
     await updateCartItem({ cartItemId, quantity });
   }
 
-  function handleApplyCoupon() {
+  async function handleApplyCoupon() {
     if (!coupon.trim()) {
       setCouponError("Please enter a coupon code");
       return;
     }
-    setCouponError("Invalid coupon code. Try again.");
+    
+    try {
+      const result = await convex.query(api.offers.validateOffer, {
+        code: coupon,
+        cartTotal: total,
+      });
+
+      if (result.valid && result.offer) {
+        setAppliedCoupon(result.offer);
+        setCouponError("");
+        
+        let calculatedDiscount = 0;
+        if (result.offer.discountType === "percentage") {
+          calculatedDiscount = (total * result.offer.discountValue) / 100;
+        } else {
+          calculatedDiscount = result.offer.discountValue;
+        }
+        
+        if (result.offer.maxDiscount && calculatedDiscount > result.offer.maxDiscount) {
+          calculatedDiscount = result.offer.maxDiscount;
+        }
+        
+        setDiscountAmount(calculatedDiscount);
+      } else {
+        setCouponError(result.error || "Invalid coupon");
+        setAppliedCoupon(null);
+        setDiscountAmount(0);
+      }
+    } catch (e) {
+      setCouponError("Failed to apply coupon");
+    }
+  }
+
+  function handleRemoveCoupon() {
+    setCoupon("");
+    setAppliedCoupon(null);
+    setDiscountAmount(0);
+    setCouponError("");
+  }
+
+  function handleGetLocation() {
+    setIsGettingLocation(true);
+    setLocationError("");
+
+    if (!navigator.geolocation) {
+      setLocationError("Geolocation is not supported by your browser");
+      setIsGettingLocation(false);
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const { latitude, longitude } = position.coords;
+          setNewLat(latitude);
+          setNewLng(longitude);
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+          const data = await res.json();
+          const addressString = data.display_name || "Current Location";
+          setNewAddress(addressString);
+        } catch (error) {
+          setLocationError("Failed to fetch address");
+        } finally {
+          setIsGettingLocation(false);
+        }
+      },
+      (error) => {
+        setLocationError("Failed to get your location");
+        setIsGettingLocation(false);
+      }
+    );
+  }
+
+  async function handleSaveNewAddress() {
+    if (!newAddress.trim()) {
+       setLocationError("Please enter or fetch an address");
+       return;
+    }
+    await addAddressMutation({
+      label: newLabel,
+      icon: newLabel === "Home" ? "home" : newLabel === "Work" ? "work" : "location_on",
+      address: newAddress,
+      flat: newFlat,
+      landmark: newLandmark,
+      lat: newLat,
+      lng: newLng,
+      deliveryTime: "30-40 mins",
+      isSelected: true,
+    });
+    // Reset form
+    setShowAddressForm(false);
+    setNewAddress("");
+    setNewFlat("");
+    setNewLandmark("");
+    setNewLabel("Home");
+    setNewLat(undefined);
+    setNewLng(undefined);
   }
 
   // Compute addon total for a single cart item
@@ -74,7 +186,7 @@ export default function CheckoutPage() {
     return (item.menuItem.price + addonSum) * item.quantity;
   }
 
-  const grandTotal = total + DELIVERY_FEE + TAX_RATE;
+  const grandTotal = total + DELIVERY_FEE + TAX_RATE - discountAmount;
 
   async function placeOrder() {
     if (!userId || cart.length === 0) return;
@@ -93,6 +205,10 @@ export default function CheckoutPage() {
       items: formattedItems,
       totalPrice: grandTotal,
       userId: (session?.user as any)?.id || userId,
+      paymentMethod: selectedPayment,
+      appliedCoupon: appliedCoupon?.code,
+      discountAmount: discountAmount,
+      deliveryAddress: selectedAddress?.address,
     });
     
     await clearCart({ userId });
@@ -107,11 +223,6 @@ export default function CheckoutPage() {
       <div className="flex flex-col lg:flex-row gap-8">
         {/* Left: Address & Payment */}
         <div className="lg:w-2/3 space-y-6">
-          <div className="mb-4">
-            <h1 className="text-2xl font-bold text-text-main">Secure Checkout</h1>
-            <p className="text-text-muted text-sm">Complete your order details below</p>
-          </div>
-
           {/* Delivery Address — fetched from Convex */}
           <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm relative overflow-hidden">
             <div className="flex items-center justify-between mb-6">
@@ -121,43 +232,129 @@ export default function CheckoutPage() {
                 </div>
                 <h2 className="text-lg font-bold text-text-main">Delivery Address</h2>
               </div>
-              <button className="text-primary text-sm font-semibold hover:underline">Add New</button>
+              <button onClick={() => setShowAddressForm(!showAddressForm)} className="text-primary text-sm font-semibold hover:underline flex items-center gap-1">
+                {showAddressForm ? "Cancel" : "+ Add New Address"}
+              </button>
             </div>
-            {/* Map placeholder */}
-            <div className="h-40 w-full bg-gray-100 rounded-lg mb-6 overflow-hidden relative">
-              <div className="absolute inset-0 opacity-20" style={{ backgroundImage: "radial-gradient(#897561 1px, transparent 1px)", backgroundSize: "20px 20px" }}></div>
-              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
-                <span className="material-symbols-outlined text-4xl text-primary drop-shadow-md">location_on</span>
-                <div className="bg-white px-3 py-1 rounded-full text-xs font-bold shadow-sm mt-1">
-                  {selectedAddress?.label || "Home"}
+            {locationError && <p className="text-xs text-red-500 mb-4 px-1">{locationError}</p>}
+            
+            {selectedAddress && !showAddressForm && (
+               <div className="mb-6">
+                 {selectedAddress.lat && selectedAddress.lng ? (
+                   <a 
+                     href={`https://www.google.com/maps/dir/?api=1&destination=${selectedAddress.lat},${selectedAddress.lng}`} 
+                     target="_blank" 
+                     rel="noreferrer"
+                     className="inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors font-medium border border-blue-200"
+                   >
+                     <span className="material-symbols-outlined text-[18px]">directions</span>
+                     View Directions
+                   </a>
+                 ) : (
+                   <a 
+                     href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(selectedAddress.address)}`} 
+                     target="_blank" 
+                     rel="noreferrer"
+                     className="inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors font-medium border border-blue-200"
+                   >
+                     <span className="material-symbols-outlined text-[18px]">directions</span>
+                     View Directions
+                   </a>
+                 )}
+               </div>
+            )}
+
+            {showAddressForm ? (
+              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-6 space-y-4">
+                <div className="flex justify-between items-center mb-2">
+                  <h3 className="font-bold text-text-main">Add New Address</h3>
+                  <button onClick={handleGetLocation} disabled={isGettingLocation} className="bg-primary text-white text-xs font-semibold px-3 py-1.5 rounded flex items-center gap-1 disabled:opacity-50 hover:bg-primary-dark transition-colors">
+                    <span className="material-symbols-outlined text-[14px]">my_location</span>
+                    {isGettingLocation ? "Locating..." : "Get Auto Location"}
+                  </button>
                 </div>
-              </div>
-            </div>
-            <div className="grid md:grid-cols-2 gap-4">
-              {addressesDb.map((addr: any) => (
-                <div
-                  key={addr.id}
-                  onClick={() => selectAddressMutation({ id: addr.id })}
-                  className={`border-2 rounded-lg p-4 relative cursor-pointer group ${addr.isSelected ? "border-primary bg-primary/5" : "border-gray-200 hover:border-primary/50"}`}
-                >
-                  {addr.isSelected && (
-                    <div className="absolute top-4 right-4 text-primary">
-                      <span className="material-symbols-outlined">check_circle</span>
-                    </div>
-                  )}
-                  <div className="flex items-start gap-3">
-                    <span className="material-symbols-outlined text-gray-500 mt-1">{addr.icon}</span>
+                
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs text-text-muted mb-1 font-medium">Street Address / Locality</label>
+                    <textarea 
+                      className="w-full p-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:ring-primary focus:border-primary resize-none" 
+                      rows={2}
+                      placeholder="Street, area, city..."
+                      value={newAddress}
+                      onChange={(e) => setNewAddress(e.target.value)}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <h3 className="font-bold text-text-main">{addr.label}</h3>
-                      <p className="text-sm text-text-muted mt-1 leading-relaxed">
-                        {addr.address}
-                      </p>
-                      <div className="mt-3 text-sm text-text-main font-medium">{addr.deliveryTime}</div>
+                      <label className="block text-xs text-text-muted mb-1 font-medium">Flat / House No.</label>
+                      <input 
+                        type="text" 
+                        className="w-full p-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:ring-primary focus:border-primary" 
+                        placeholder="e.g. Flat 402"
+                        value={newFlat}
+                        onChange={(e) => setNewFlat(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-text-muted mb-1 font-medium">Landmark (Optional)</label>
+                      <input 
+                        type="text" 
+                        className="w-full p-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:ring-primary focus:border-primary" 
+                        placeholder="Near Apollo Hospital"
+                        value={newLandmark}
+                        onChange={(e) => setNewLandmark(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-text-muted mb-1 font-medium">Save As</label>
+                    <div className="flex gap-2">
+                      {["Home", "Work", "Other"].map(lbl => (
+                         <button 
+                           key={lbl}
+                           onClick={() => setNewLabel(lbl)}
+                           className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${newLabel === lbl ? 'bg-primary/10 border-primary text-primary' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+                         >
+                           {lbl}
+                         </button>
+                      ))}
                     </div>
                   </div>
                 </div>
-              ))}
-            </div>
+
+                <button onClick={handleSaveNewAddress} className="w-full bg-primary text-white font-bold py-2.5 rounded-lg mt-2 shadow-sm shadow-primary/30 hover:bg-primary-dark transition-colors">
+                  Save Address and Proceed
+                </button>
+              </div>
+            ) : (
+                <div className="grid md:grid-cols-2 gap-4">
+                  {addressesDb.map((addr: any) => (
+                    <div
+                      key={addr.id}
+                      onClick={() => selectAddressMutation({ id: addr.id })}
+                      className={`border-2 rounded-lg p-4 relative cursor-pointer group ${addr.isSelected ? "border-primary bg-primary/5" : "border-gray-200 hover:border-primary/50"}`}
+                    >
+                      {addr.isSelected && (
+                        <div className="absolute top-4 right-4 text-primary">
+                          <span className="material-symbols-outlined">check_circle</span>
+                        </div>
+                      )}
+                      <div className="flex items-start gap-3">
+                        <span className="material-symbols-outlined text-gray-500 mt-1">{addr.icon}</span>
+                        <div>
+                          <h3 className="font-bold text-text-main">{addr.label}</h3>
+                          <p className="text-sm text-text-muted mt-1 leading-relaxed">
+                            {addr.flat ? `${addr.flat}, ` : ''}{addr.address}
+                          </p>
+                          {addr.landmark && <p className="text-xs text-gray-500 mt-0.5">Landmark: {addr.landmark}</p>}
+                          <div className="mt-3 text-sm text-text-main font-medium">{addr.deliveryTime}</div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+            )}
           </div>
 
           {/* Payment Method */}
@@ -169,45 +366,20 @@ export default function CheckoutPage() {
               <h2 className="text-lg font-bold text-text-main">Payment Method</h2>
             </div>
             <div className="space-y-3">
-              <label className="flex items-center p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
-                <input className="w-5 h-5 text-primary border-gray-300 focus:ring-primary" name="payment" type="radio" checked={selectedPayment === "upi"} onChange={() => setSelectedPayment("upi")} />
+              <label className="flex items-center p-4 border border-gray-200 rounded-lg opacity-50 cursor-not-allowed bg-gray-50">
+                <input className="w-5 h-5 text-primary border-gray-300" disabled name="payment" type="radio" checked={selectedPayment === "upi"} />
                 <div className="ml-4 flex-1">
                   <div className="flex items-center justify-between">
-                    <span className="font-semibold text-text-main">UPI</span>
-                    <div className="flex gap-2">
+                    <span className="font-semibold text-text-main text-gray-500">UPI (Temporarily Unavailable)</span>
+                    <div className="flex gap-2 opacity-50">
                       <span className="px-2 py-0.5 bg-gray-100 text-xs rounded text-gray-600 font-medium">GPay</span>
                       <span className="px-2 py-0.5 bg-gray-100 text-xs rounded text-gray-600 font-medium">PhonePe</span>
                     </div>
                   </div>
-                  <p className="text-sm text-text-muted mt-0.5">Pay via any UPI app</p>
+                  <p className="text-sm text-gray-400 mt-0.5">Pay via any UPI app</p>
                 </div>
               </label>
-              <label className="flex items-center p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
-                <input className="w-5 h-5 text-primary border-gray-300 focus:ring-primary" name="payment" type="radio" checked={selectedPayment === "card"} onChange={() => setSelectedPayment("card")} />
-                <div className="ml-4 flex-1">
-                  <div className="flex items-center justify-between">
-                    <span className="font-semibold text-text-main">Credit / Debit Card</span>
-                    <span className="material-symbols-outlined text-gray-400">credit_card</span>
-                  </div>
-                  <p className="text-sm text-text-muted mt-0.5">Visa, Mastercard, RuPay</p>
-                </div>
-              </label>
-              {selectedPayment === "card" && (
-                <div className="ml-9 p-4 bg-gray-50 rounded-lg border border-gray-100">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="bg-white p-1.5 rounded border border-gray-200">
-                        <span className="font-bold text-xs tracking-wider text-blue-800">VISA</span>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-text-main">HDFC Bank Debit Card</p>
-                        <p className="text-xs text-text-muted">**** 4589</p>
-                      </div>
-                    </div>
-                    <input className="w-16 p-2 text-center text-sm border-gray-300 rounded focus:ring-primary focus:border-primary" placeholder="CVV" type="text" />
-                  </div>
-                </div>
-              )}
+
               <label className="flex items-center p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
                 <input className="w-5 h-5 text-primary border-gray-300 focus:ring-primary" name="payment" type="radio" checked={selectedPayment === "cod"} onChange={() => setSelectedPayment("cod")} />
                 <div className="ml-4 flex-1">
@@ -275,19 +447,35 @@ export default function CheckoutPage() {
                     <span className="material-symbols-outlined text-[20px]">local_offer</span>
                   </span>
                   <input
-                    className="w-full pl-10 pr-20 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-primary focus:border-primary"
+                    className="w-full pl-10 pr-20 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-primary focus:border-primary disabled:opacity-50"
                     placeholder="Apply Coupon"
                     type="text"
                     value={coupon}
                     onChange={(e) => { setCoupon(e.target.value); setCouponError(""); }}
+                    disabled={!!appliedCoupon}
                   />
-                  <button
-                    onClick={handleApplyCoupon}
-                    className="absolute right-1 top-1 bottom-1 px-3 text-xs font-bold text-primary hover:bg-primary/5 rounded-md transition-colors uppercase"
-                  >
-                    Apply
-                  </button>
+                  {appliedCoupon ? (
+                    <button
+                      onClick={handleRemoveCoupon}
+                      className="absolute right-1 top-1 bottom-1 px-3 text-xs font-bold text-red-500 hover:bg-red-50 rounded-md transition-colors uppercase"
+                    >
+                      Remove
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleApplyCoupon}
+                      className="absolute right-1 top-1 bottom-1 px-3 text-xs font-bold text-primary hover:bg-primary/5 rounded-md transition-colors uppercase"
+                    >
+                      Apply
+                    </button>
+                  )}
                 </div>
+                {appliedCoupon && (
+                  <p className="text-xs text-green-600 mt-2 font-medium">
+                    <span className="material-symbols-outlined text-[14px] align-middle mr-1">check_circle</span>
+                    Coupon {appliedCoupon.code} applied. You saved ₹{discountAmount.toFixed(2)}!
+                  </p>
+                )}
                 {couponError && (
                   <p className="text-xs text-red-500 mt-1">{couponError}</p>
                 )}
@@ -307,6 +495,12 @@ export default function CheckoutPage() {
                   <span className="flex items-center gap-1">Taxes &amp; Charges <span className="material-symbols-outlined text-[14px] text-gray-400">info</span></span>
                   <span>₹{TAX_RATE.toFixed(2)}</span>
                 </div>
+                {appliedCoupon && (
+                  <div className="flex justify-between text-sm text-green-600 font-medium">
+                    <span className="flex items-center gap-1">Discount ({appliedCoupon.code})</span>
+                    <span>-₹{discountAmount.toFixed(2)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between items-center pt-4 mt-2 border-t border-gray-200">
                   <span className="font-bold text-lg text-text-main">To Pay</span>
                   <span className="font-bold text-lg text-text-main">₹{grandTotal.toFixed(2)}</span>

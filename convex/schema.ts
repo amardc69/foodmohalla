@@ -57,7 +57,14 @@ export default defineSchema({
     ),
     status: v.string(), // "Pending", "Preparing", "Out for Delivery", "Delivered"
     totalPrice: v.number(),
-  }).index("by_status", ["status"]),
+    paymentMethod: v.optional(v.string()), // "cod", "upi"
+    appliedCoupon: v.optional(v.string()),
+    discountAmount: v.optional(v.number()),
+    deliveryAddress: v.optional(v.string()),
+    userId: v.optional(v.string()), // Added for user-specific orders
+  })
+    .index("by_status", ["status"])
+    .index("by_user", ["userId"]),
 
   addresses: defineTable({
     id: v.string(),
@@ -66,6 +73,10 @@ export default defineSchema({
     address: v.string(),
     deliveryTime: v.string(),
     isSelected: v.boolean(),
+    flat: v.optional(v.string()),
+    landmark: v.optional(v.string()),
+    lat: v.optional(v.number()),
+    lng: v.optional(v.number()),
   }),
 
   carts: defineTable({

@@ -49,3 +49,34 @@ export const deleteOffer = mutation({
     await ctx.db.delete(args.id);
   },
 });
+
+export const validateOffer = query({
+  args: {
+    code: v.string(),
+    cartTotal: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const offer = await ctx.db
+      .query("offers")
+      .withIndex("by_code", (q) => q.eq("code", args.code.toUpperCase()))
+      .first();
+
+    if (!offer) {
+      return { valid: false, error: "Invalid coupon code" };
+    }
+
+    if (!offer.isActive) {
+      return { valid: false, error: "Coupon code is expired or inactive" };
+    }
+
+    if (offer.validUntil && offer.validUntil < Date.now()) {
+      return { valid: false, error: "Coupon code is expired" };
+    }
+
+    if (offer.minOrderValue && args.cartTotal < offer.minOrderValue) {
+      return { valid: false, error: `Minimum order value for this coupon is ₹${offer.minOrderValue}` };
+    }
+
+    return { valid: true, offer };
+  },
+});
