@@ -70,16 +70,27 @@ export default function HomePage() {
               </Link>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-              {categoriesDb.map((cat: any) => (
+              {categoriesDb.map((cat: any, index: number) => {
+                const bgColors = [
+                  "from-amber-200/80 to-orange-400/80 dark:from-amber-700/50 dark:to-orange-900/50",
+                  "from-rose-200/80 to-red-400/80 dark:from-rose-700/50 dark:to-red-900/50",
+                  "from-emerald-200/80 to-teal-400/80 dark:from-emerald-700/50 dark:to-teal-900/50",
+                  "from-blue-200/80 to-indigo-400/80 dark:from-blue-700/50 dark:to-indigo-900/50",
+                  "from-purple-200/80 to-fuchsia-400/80 dark:from-purple-700/50 dark:to-fuchsia-900/50",
+                  "from-lime-200/80 to-green-400/80 dark:from-lime-700/50 dark:to-green-900/50"
+                ];
+                const gradientClass = bgColors[index % bgColors.length];
+                
+                return (
                 <Link
                   key={cat.slug}
                   href={`/menu?category=${cat.slug}`}
                   className="group cursor-pointer flex flex-col gap-3 p-3 rounded-2xl bg-white border border-slate-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
                 >
-                  <div className="w-full aspect-square bg-center bg-no-repeat bg-cover rounded-xl overflow-hidden relative">
-                    <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors"></div>
+                  <div className={`w-full aspect-square rounded-xl overflow-hidden relative bg-gradient-to-br ${gradientClass}`}>
+                    <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors z-10"></div>
                     <div
-                      className="w-full h-full bg-cover bg-center transition-transform duration-500 group-hover:scale-110"
+                      className="w-full h-full bg-cover bg-center transition-transform duration-500 group-hover:scale-110 relative z-0"
                       style={{ backgroundImage: `url('${cat.image}')` }}
                     ></div>
                   </div>
@@ -99,7 +110,8 @@ export default function HomePage() {
                     </p>
                   </div>
                 </Link>
-              ))}
+                );
+              })}
             </div>
           </div>
 
