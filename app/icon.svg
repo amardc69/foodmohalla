@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f97316"/>
+      <stop offset="100%" stop-color="#c2410c"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="8" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)" />
+  
+  <!-- Food cloche (dome) -->
+  <path d="M256 128 C160 128 104 224 96 288 L416 288 C408 224 352 128 256 128 Z" fill="#ffffff" filter="url(#shadow)"/>
+  
+  <!-- Handle -->
+  <circle cx="256" cy="112" r="24" fill="#ffffff" filter="url(#shadow)"/>
+  
+  <!-- Plate base -->
+  <path d="M80 304 C80 304 256 344 432 304" stroke="#ffffff" stroke-width="32" stroke-linecap="round" fill="none" filter="url(#shadow)"/>
+</svg>
