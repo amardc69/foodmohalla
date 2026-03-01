@@ -1,5 +1,6 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
+import { Id } from "./_generated/dataModel";
 import bcrypt from "bcryptjs";
 
 /**
@@ -95,5 +96,29 @@ export const getUserByUsername = query({
       role: user.role,
       avatar: user.avatar,
     };
+  },
+});
+
+/**
+ * Get current user by generic auth ID.
+ */
+export const currentUser = query({
+  args: { authProviderId: v.string() },
+  handler: async (ctx, args) => {
+    try {
+      const user = await ctx.db.get(args.authProviderId as Id<"users">);
+      if (!user) return null;
+
+      return {
+        id: user._id,
+        name: user.name,
+        username: user.username,
+        role: user.role,
+        avatar: user.avatar,
+        phone: user.phone,
+      };
+    } catch {
+      return null;
+    }
   },
 });

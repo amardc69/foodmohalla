@@ -16,7 +16,7 @@ function ProfileContent() {
   });
 
   const currentUser = useQuery(api.users.currentUser, 
-    session?.user?.id ? { authProviderId: session.user.id } : "skip" // Assuming email/id is used to lookup
+    (session?.user as any)?.id ? { authProviderId: (session!.user as any).id as string } : "skip" // Assuming email/id is used to lookup
   );
   
   if (status === "loading" || currentUser === undefined) {
@@ -28,7 +28,7 @@ function ProfileContent() {
   }
 
   // fallback if user is in session but not fully synced in Convex yet
-  const userToDisplay = currentUser || session?.user;
+  const userToDisplay: any = currentUser || session?.user;
 
   return (
     <div className="flex flex-1 flex-col items-center py-12 px-4 bg-slate-50 min-h-screen w-full">
