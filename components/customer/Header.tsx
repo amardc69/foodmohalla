@@ -7,6 +7,14 @@ import { useSession, signIn, signOut } from "next-auth/react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useCartUserId } from "@/lib/useGuestId";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function CustomerHeader() {
   const pathname = usePathname();
@@ -18,19 +26,19 @@ export default function CustomerHeader() {
   const cartCount = cartItems ? cartItems.reduce((acc, item) => acc + item.quantity, 0) : 0;
 
   return (
-    <header className="sticky top-0 z-50 flex items-center justify-between whitespace-nowrap border-b border-solid border-slate-200 bg-white/90 backdrop-blur-md px-4 py-3 md:px-10">
-      <Link href="/" className="flex items-center gap-4">
-        <div className="size-8 text-primary">
-          <span className="material-symbols-outlined !text-4xl">
+    <header className="sticky top-0 z-50 flex items-center justify-between whitespace-nowrap px-4 py-3 md:px-8 border-b border-slate-200">
+      <Link href="/" className="flex items-center gap-3 group">
+        <div className="size-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+          <span className="material-symbols-outlined !text-[24px]">
             restaurant_menu
           </span>
         </div>
-        <h2 className="text-slate-900 text-xl font-extrabold leading-tight tracking-tight">
+        <h2 className="text-slate-900 text-xl font-extrabold tracking-tight hidden sm:block">
           Food Mohalla
         </h2>
       </Link>
-      <div className="flex flex-1 justify-end gap-8">
-        <nav className="hidden md:flex items-center gap-9">
+      <div className="flex flex-1 justify-end gap-6 sm:gap-8">
+        <nav className="hidden lg:flex items-center gap-8">
           <Link
             className={`text-sm font-medium leading-normal transition-colors ${
               pathname === "/"
@@ -58,19 +66,57 @@ export default function CustomerHeader() {
             Offers
           </Link>
         </nav>
-        <div className="flex gap-2 items-center">
+        <div className="flex gap-3 sm:gap-4 items-center">
           {session ? (
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium mr-2 hidden md:inline-block">
-                Hi, {session.user?.name?.split(' ')[0]}
-              </span>
-              <button
-                onClick={() => signOut()}
-                className="text-xs font-semibold text-slate-500 hover:text-slate-800"
-              >
-                Sign Out
-              </button>
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center gap-2 p-1.5 pr-3 rounded-full hover:bg-slate-100 transition-colors border border-transparent hover:border-slate-200 focus:outline-none">
+                  <div className="size-8 rounded-full bg-gradient-to-br from-primary/20 to-orange-100 flex items-center justify-center border border-primary/20 overflow-hidden">
+                    {session.user?.image ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={session.user.image} alt="User" className="w-full h-full object-cover" />
+                    ) : (
+                        <span className="text-sm font-bold text-primary">
+                        {session.user?.name?.charAt(0) || "U"}
+                        </span>
+                    )}
+                  </div>
+                  <span className="text-sm font-bold text-slate-700 hidden sm:block">
+                    {session.user?.name?.split(' ')[0]}
+                  </span>
+                  <span className="material-symbols-outlined text-slate-400 text-[18px]">expand_more</span>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56 mt-2 rounded-2xl shadow-xl border-slate-100 p-2">
+                <DropdownMenuLabel className="font-normal px-2 py-1.5">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-bold leading-none text-slate-900">{session.user?.name}</p>
+                    <p className="text-xs leading-none text-slate-500">{session.user?.email}</p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator className="my-1 bg-slate-100" />
+                <DropdownMenuItem asChild className="rounded-xl focus:bg-primary/5 focus:text-primary cursor-pointer">
+                  <Link href="/profile" className="flex items-center gap-2 w-full px-2 py-2">
+                    <span className="material-symbols-outlined text-[18px]">person</span>
+                    <span className="font-semibold text-sm">My Profile</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild className="rounded-xl focus:bg-primary/5 focus:text-primary cursor-pointer">
+                  <Link href="/orders" className="flex items-center gap-2 w-full px-2 py-2">
+                    <span className="material-symbols-outlined text-[18px]">receipt_long</span>
+                    <span className="font-semibold text-sm">Valid Orders</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="my-1 bg-slate-100" />
+                <DropdownMenuItem 
+                    onClick={() => signOut({ callbackUrl: "/" })}
+                    className="rounded-xl focus:bg-red-50 focus:text-red-600 text-red-600 font-semibold cursor-pointer flex items-center gap-2 px-2 py-2"
+                >
+                  <span className="material-symbols-outlined text-[18px]">logout</span>
+                  <span className="text-sm">Sign Out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           ) : (
             <button
               onClick={() => signIn(undefined, { callbackUrl: "/" })}
@@ -79,11 +125,12 @@ export default function CustomerHeader() {
               Sign In
             </button>
           )}
+          <div className="h-8 w-px bg-slate-200 hidden sm:block mx-1"></div>
           <Link
             href="/checkout"
-            className="relative flex cursor-pointer items-center justify-center rounded-xl h-10 w-10 bg-slate-100 hover:bg-slate-200 transition-colors text-slate-900"
+            className="relative flex cursor-pointer items-center justify-center rounded-xl h-10 w-10 sm:w-12 bg-slate-100/80 hover:bg-primary/10 transition-colors text-slate-700 hover:text-primary group border border-transparent hover:border-primary/20"
           >
-            <span className="material-symbols-outlined !text-xl">
+            <span className="material-symbols-outlined !text-[22px] group-hover:scale-110 transition-transform">
               shopping_cart
             </span>
             {cartCount > 0 && (

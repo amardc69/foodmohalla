@@ -27,8 +27,8 @@ function SignInForm() {
   const searchParams = useSearchParams();
 
   const rawCallbackUrl = searchParams.get("callbackUrl") || "/";
-  // If user came from home page, redirect to menu instead
-  const customerRedirect = rawCallbackUrl === "/" ? "/menu" : rawCallbackUrl;
+  // If user came from home page, redirect to profile instead
+  const customerRedirect = rawCallbackUrl === "/" ? "/profile" : rawCallbackUrl;
 
   // Protect route
   useEffect(() => {

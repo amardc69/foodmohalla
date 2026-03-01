@@ -7,13 +7,13 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { MenuItem } from "@/lib/types";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-  SheetFooter,
-} from "@/components/ui/sheet";
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerDescription,
+  DrawerFooter,
+} from "@/components/ui/drawer";
 
 import { useSession } from "next-auth/react";
 import { useCartUserId } from "@/lib/useGuestId";
@@ -340,16 +340,17 @@ function MenuContent() {
         )}
       </main>
 
-      <Sheet open={!!selectedItemForSheet} onOpenChange={(open) => !open && setSelectedItemForSheet(null)}>
-        <SheetContent side="right" className="w-[400px] sm:w-[540px] overflow-y-auto z-[100] border-l-0 shadow-2xl">
+      <Drawer open={!!selectedItemForSheet} onOpenChange={(open) => !open && setSelectedItemForSheet(null)}>
+        <DrawerContent className="max-h-[96vh]">
           {selectedItemForSheet && (
-            <div className="flex flex-col h-full">
-              <SheetHeader className="text-left mb-6">
-                <SheetTitle className="text-2xl font-bold text-slate-900">{selectedItemForSheet.name}</SheetTitle>
-                <SheetDescription className="text-slate-500">
-                  {selectedItemForSheet.description}
-                </SheetDescription>
-              </SheetHeader>
+            <div className="flex flex-col h-full max-h-full overflow-hidden">
+              <div className="overflow-y-auto px-4 sm:px-6 hide-scrollbar">
+                <DrawerHeader className="text-left mb-6 px-0 pt-6">
+                  <DrawerTitle className="text-2xl font-bold text-slate-900">{selectedItemForSheet.name}</DrawerTitle>
+                  <DrawerDescription className="text-slate-500">
+                    {selectedItemForSheet.description}
+                  </DrawerDescription>
+                </DrawerHeader>
 
               <div className="flex-1 space-y-8">
                 {/* Add-ons */}
@@ -450,20 +451,20 @@ function MenuContent() {
               </div>
 
               {/* Footer / Cart Action */}
-              <div className="pt-6 mt-6 border-t border-slate-200 px-1 pb-4">
-                <div className="flex items-center justify-between bg-white border border-slate-200 rounded-xl px-4 py-2 mb-4 w-32 self-start">
+              <div className="pt-6 mt-6 border-t border-slate-200 px-0 pb-8 flex flex-col sm:flex-row gap-4 sm:items-center justify-between sticky bottom-0 bg-white z-10">
+                <div className="flex items-center justify-between bg-white border border-slate-200 rounded-xl px-4 py-2 w-full sm:w-32">
                   <button
                     onClick={() => setSheetQuantity(Math.max(1, sheetQuantity - 1))}
-                    className="size-6 flex items-center justify-center rounded-md hover:bg-slate-100 text-slate-600 transition-colors"
+                    className="size-8 sm:size-6 flex items-center justify-center rounded-md hover:bg-slate-100 text-slate-600 transition-colors"
                   >
-                    <span className="material-symbols-outlined text-[18px]">remove</span>
+                    <span className="material-symbols-outlined text-[20px] sm:text-[18px]">remove</span>
                   </button>
-                  <span className="font-bold text-sm w-4 text-center">{sheetQuantity}</span>
+                  <span className="font-bold text-lg sm:text-sm w-4 text-center">{sheetQuantity}</span>
                   <button
                     onClick={() => setSheetQuantity(sheetQuantity + 1)}
-                    className="size-6 flex items-center justify-center rounded-md hover:bg-slate-100 text-slate-600 transition-colors"
+                    className="size-8 sm:size-6 flex items-center justify-center rounded-md hover:bg-slate-100 text-slate-600 transition-colors"
                   >
-                    <span className="material-symbols-outlined text-[18px]">add</span>
+                    <span className="material-symbols-outlined text-[20px] sm:text-[18px]">add</span>
                   </button>
                 </div>
                 {(() => {
@@ -477,7 +478,7 @@ function MenuContent() {
                     <button
                       onClick={handleSheetAddToCart}
                       disabled={addingToCart === selectedItemForSheet.id}
-                      className={`w-full font-bold text-lg py-3 rounded-xl shadow-lg flex items-center justify-center gap-3 transition-transform active:scale-[0.98] ${
+                      className={`w-full sm:flex-1 font-bold text-lg py-3 rounded-xl shadow-lg flex items-center justify-center gap-3 transition-transform active:scale-[0.98] ${
                         addingToCart === selectedItemForSheet.id
                           ? "bg-green-500 text-white shadow-green-500/30"
                           : "bg-primary hover:bg-orange-600 text-white shadow-orange-500/30"
@@ -491,10 +492,11 @@ function MenuContent() {
                   );
                 })()}
               </div>
+              </div>
             </div>
           )}
-        </SheetContent>
-      </Sheet>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 }

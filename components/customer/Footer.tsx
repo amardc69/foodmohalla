@@ -74,11 +74,14 @@ export default function CustomerFooter() {
         <p className="text-slate-400 text-sm">
           © 2025 Food Mohalla. All rights reserved.
         </p>
-        <div className="flex gap-6 items-center">
-          <Link href="/auth/signin" className="text-slate-400 hover:text-primary text-xs transition-colors">
-            Admin Login
+        <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 items-center">
+          <Link href="/auth/signin" className="text-slate-400 hover:text-primary text-xs font-semibold transition-colors">
+            Admin Panel
           </Link>
-          <p className="text-slate-400 text-xs">Made with love for food.</p>
+          <div className="hidden sm:block h-3 w-px bg-slate-200"></div>
+          <p className="text-slate-500 text-xs font-medium">
+            Developed by <span className="font-bold text-slate-800">Team ARK</span>
+          </p>
         </div>
       </div>
     </footer>
