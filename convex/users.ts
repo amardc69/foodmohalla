@@ -1,5 +1,6 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
+import bcrypt from "bcryptjs";
 
 /**
  * Register a new user. Returns the user ID on success, or throws if username already taken.
@@ -23,10 +24,13 @@ export const register = mutation({
       throw new Error("This username is already taken");
     }
 
+    const salt = bcrypt.genSaltSync(10);
+    const hashedPassword = bcrypt.hashSync(args.password, salt);
+
     const userId = await ctx.db.insert("users", {
       name: args.name,
       username: args.username,
-      password: args.password, // In production, hash this!
+      password: hashedPassword,
       phone: args.phone,
       role: args.role || "customer",
       avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(args.name)}&background=ec7f13&color=fff`,
@@ -51,7 +55,13 @@ export const login = mutation({
       .withIndex("by_username", (q) => q.eq("username", args.username))
       .first();
 
-    if (!user || user.password !== args.password) {
+    if (!user) {
+      return null;
+    }
+
+    const passwordsMatch = bcrypt.compareSync(args.password, user.password);
+    
+    if (!passwordsMatch) {
       return null;
     }
 

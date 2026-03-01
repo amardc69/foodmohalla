@@ -10,6 +10,7 @@ const plusJakarta = Plus_Jakarta_Sans({
 
 import ConvexClientProvider from "./ConvexClientProvider";
 import AuthProvider from "./AuthProvider";
+import { Toaster } from "react-hot-toast";
 
 const baseObj = {
   title: "Food Mohalla",
@@ -33,7 +34,10 @@ export default function RootLayout({
       </head>
       <body suppressHydrationWarning className={`${plusJakarta.variable} font-display antialiased`}>
         <AuthProvider>
-          <ConvexClientProvider>{children}</ConvexClientProvider>
+          <ConvexClientProvider>
+            <Toaster position="top-center" />
+            {children}
+          </ConvexClientProvider>
         </AuthProvider>
       </body>
     </html>

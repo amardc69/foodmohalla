@@ -3,6 +3,15 @@
 import { signIn } from "next-auth/react";
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import toast from "react-hot-toast";
+import ReactCountryFlag from "react-country-flag";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 function SignInForm() {
   const [mode, setMode] = useState<"login" | "register">("login");
@@ -10,8 +19,8 @@ function SignInForm() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
+  const [countryCode, setCountryCode] = useState("+91");
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -22,17 +31,23 @@ function SignInForm() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
     setLoading(true);
 
-    const res = await signIn("login", {
+    const loginPromise = signIn("login", {
       username,
       password,
       redirect: false,
     });
 
+    toast.promise(loginPromise, {
+      loading: 'Signing in...',
+      success: 'Welcome back!',
+      error: 'Invalid username or password. Please try again.',
+    });
+
+    const res = await loginPromise;
+
     if (res?.error) {
-      setError("Invalid username or password. Please try again.");
       setLoading(false);
     } else {
       // Small delay to let the JWT cookie propagate, then check role
@@ -62,33 +77,38 @@ function SignInForm() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
 
     if (password.length < 6) {
-      setError("Password must be at least 6 characters");
+      toast.error("Password must be at least 6 characters");
       return;
     }
 
     if (!phone.trim()) {
-      setError("Phone number is required");
+      toast.error("Phone number is required");
       return;
     }
 
     setLoading(true);
 
-    const res = await signIn("register", {
+    const registerPromise = signIn("register", {
       name,
       username,
       password,
-      phone,
+      phone: `${countryCode} ${phone.trim()}`,
       redirect: false,
     });
+    
+    toast.promise(registerPromise, {
+      loading: 'Creating your account...',
+      success: 'Account created successfully!',
+      error: 'Registration failed. This username may already be taken.',
+    });
+
+    const res = await registerPromise;
 
     setLoading(false);
 
-    if (res?.error) {
-      setError("Registration failed. This username may already be taken.");
-    } else {
+    if (!res?.error) {
       router.push(customerRedirect);
     }
   };
@@ -114,7 +134,7 @@ function SignInForm() {
           {/* Tab Switcher */}
           <div className="flex mb-6 bg-slate-100 rounded-xl p-1">
             <button
-              onClick={() => { setMode("login"); setError(""); }}
+              onClick={() => { setMode("login"); }}
               className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all ${
                 mode === "login"
                   ? "bg-white shadow-sm text-slate-900"
@@ -124,7 +144,7 @@ function SignInForm() {
               Sign In
             </button>
             <button
-              onClick={() => { setMode("register"); setError(""); }}
+              onClick={() => { setMode("register"); }}
               className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all ${
                 mode === "register"
                   ? "bg-white shadow-sm text-slate-900"
@@ -139,12 +159,6 @@ function SignInForm() {
             className="space-y-4"
             onSubmit={mode === "login" ? handleLogin : handleRegister}
           >
-            {error && (
-              <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm flex items-center gap-2">
-                <span className="material-symbols-outlined text-lg">error</span>
-                {error}
-              </div>
-            )}
 
             {/* Name — only on register */}
             {mode === "register" && (
@@ -155,10 +169,11 @@ function SignInForm() {
                 <input
                   type="text"
                   required
+                  disabled={loading}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="John Doe"
-                  className="block w-full px-4 py-2.5 border border-slate-200 rounded-xl shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm transition-colors"
+                  className="block w-full px-4 py-2.5 border border-slate-200 rounded-xl shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm transition-colors disabled:opacity-50 disabled:bg-slate-50"
                 />
               </div>
             )}
@@ -170,10 +185,11 @@ function SignInForm() {
               <input
                 type="text"
                 required
+                disabled={loading}
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="Enter your username"
-                className="block w-full px-4 py-2.5 border border-slate-200 rounded-xl shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm transition-colors"
+                className="block w-full px-4 py-2.5 border border-slate-200 rounded-xl shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm transition-colors disabled:opacity-50 disabled:bg-slate-50"
               />
             </div>
 
@@ -185,10 +201,11 @@ function SignInForm() {
                 <input
                   type={showPassword ? "text" : "password"}
                   required
+                  disabled={loading}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder={mode === "register" ? "Min 6 characters" : "Enter your password"}
-                  className="block w-full px-4 py-2.5 pr-12 border border-slate-200 rounded-xl shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm transition-colors"
+                  className="block w-full px-4 py-2.5 pr-12 border border-slate-200 rounded-xl shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm transition-colors disabled:opacity-50 disabled:bg-slate-50"
                 />
                 <button
                   type="button"
@@ -219,14 +236,66 @@ function SignInForm() {
                 <label className="block text-sm font-semibold text-slate-700 mb-1">
                   Phone Number
                 </label>
-                <input
-                  type="tel"
-                  required
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="+91 98765 43210"
-                  className="block w-full px-4 py-2.5 border border-slate-200 rounded-xl shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm transition-colors"
-                />
+                <div className="flex gap-2">
+                  <div className="relative w-[100px]">
+                    <Select
+                      disabled={loading}
+                      value={countryCode}
+                      onValueChange={setCountryCode}
+                    >
+                      <SelectTrigger className="w-full border-slate-200 rounded-xl shadow-sm focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm font-medium transition-colors bg-white">
+                        <SelectValue placeholder="+91" />
+                      </SelectTrigger>
+                      <SelectContent className="z-50 min-w-[140px] bg-white">
+                        <SelectItem value="+91">
+                          <div className="flex items-center gap-2">
+                            <ReactCountryFlag countryCode="IN" svg style={{ width: '1.2em', height: '1.2em' }} />
+                            <span>+91</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="+1" disabled>
+                          <div className="flex items-center gap-2">
+                            <ReactCountryFlag countryCode="US" svg style={{ width: '1.2em', height: '1.2em' }} />
+                            <span>+1 (US)</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="+44" disabled>
+                          <div className="flex items-center gap-2">
+                            <ReactCountryFlag countryCode="GB" svg style={{ width: '1.2em', height: '1.2em' }} />
+                            <span>+44 (UK)</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="+61" disabled>
+                          <div className="flex items-center gap-2">
+                            <ReactCountryFlag countryCode="AU" svg style={{ width: '1.2em', height: '1.2em' }} />
+                            <span>+61 (AU)</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="+971" disabled>
+                          <div className="flex items-center gap-2">
+                            <ReactCountryFlag countryCode="AE" svg style={{ width: '1.2em', height: '1.2em' }} />
+                            <span>+971 (AE)</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="+65" disabled>
+                          <div className="flex items-center gap-2">
+                            <ReactCountryFlag countryCode="SG" svg style={{ width: '1.2em', height: '1.2em' }} />
+                            <span>+65 (SG)</span>
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <input
+                    type="tel"
+                    required
+                    disabled={loading}
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="98765 43210"
+                    className="block flex-1 px-4 h-[44px] border border-slate-200 rounded-xl shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm transition-colors disabled:opacity-50 disabled:bg-slate-50"
+                  />
+                </div>
               </div>
             )}
 
@@ -251,7 +320,8 @@ function SignInForm() {
               <>
                 Don&apos;t have an account?{" "}
                 <button
-                  onClick={() => { setMode("register"); setError(""); }}
+                  type="button"
+                  onClick={() => { setMode("register"); }}
                   className="text-primary font-semibold hover:underline"
                 >
                   Create one
@@ -261,7 +331,8 @@ function SignInForm() {
               <>
                 Already have an account?{" "}
                 <button
-                  onClick={() => { setMode("login"); setError(""); }}
+                  type="button"
+                  onClick={() => { setMode("login"); }}
                   className="text-primary font-semibold hover:underline"
                 >
                   Sign in
