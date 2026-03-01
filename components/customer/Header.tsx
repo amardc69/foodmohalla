@@ -81,13 +81,13 @@ export default function CustomerHeader() {
           )}
           <Link
             href="/checkout"
-            className="relative flex cursor-pointer items-center justify-center overflow-hidden rounded-xl h-10 w-10 bg-slate-100 hover:bg-slate-200 transition-colors text-slate-900"
+            className="relative flex cursor-pointer items-center justify-center rounded-xl h-10 w-10 bg-slate-100 hover:bg-slate-200 transition-colors text-slate-900"
           >
             <span className="material-symbols-outlined !text-xl">
               shopping_cart
             </span>
             {cartCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-primary text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm">
+              <span className="absolute -top-2 -right-2 bg-primary text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full shadow-sm">
                 {cartCount}
               </span>
             )}

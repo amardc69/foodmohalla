@@ -30,7 +30,9 @@ function MenuContent() {
 
   const { data: session } = useSession();
   const userId = useCartUserId(session);
+  const cartItems = useQuery(api.cart.getCart, userId ? { userId } : "skip");
   const addToCart = useMutation(api.cart.addToCart);
+  const updateCartItem = useMutation(api.cart.updateCartItem);
 
   const itemsQuery = useQuery(api.menu.getMenuItems, {
     category: activeCategory || undefined,
@@ -225,20 +227,50 @@ function MenuContent() {
                       <span className="text-lg font-bold text-slate-900">
                         ₹{item.price.toFixed(2)}
                       </span>
-                      <button
-                        onClick={() => handleAddToCart(item.id)}
-                        disabled={addingToCart === item.id}
-                        className={`flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-bold transition-colors ${
-                          addingToCart === item.id
-                            ? "bg-green-500 text-white"
-                            : "bg-primary hover:bg-orange-600 text-white shadow-sm shadow-orange-200"
-                        }`}
-                      >
-                        {addingToCart === item.id ? "Added!" : "Add"}
-                        <span className="material-symbols-outlined text-[18px]">
-                          {addingToCart === item.id ? "check" : "add"}
-                        </span>
-                      </button>
+                      {(() => {
+                        const cartItem = cartItems?.find(
+                          (ci) => ci.menuItemId === item.id && (!ci.addons || ci.addons.length === 0)
+                        );
+
+                        if (cartItem) {
+                          return (
+                            <div className="flex items-center gap-3 bg-slate-100 rounded-lg p-1 border border-slate-200">
+                              <button
+                                onClick={() => updateCartItem({ cartItemId: cartItem._id, quantity: cartItem.quantity - 1 })}
+                                className="size-7 bg-white rounded-md flex items-center justify-center text-slate-600 hover:text-primary hover:bg-slate-50 shadow-sm transition-colors"
+                              >
+                                <span className="material-symbols-outlined text-[18px]">remove</span>
+                              </button>
+                              <span className="text-sm font-bold text-slate-800 w-4 text-center">
+                                {cartItem.quantity}
+                              </span>
+                              <button
+                                onClick={() => updateCartItem({ cartItemId: cartItem._id, quantity: cartItem.quantity + 1 })}
+                                className="size-7 bg-white rounded-md flex items-center justify-center text-slate-600 hover:text-primary hover:bg-slate-50 shadow-sm transition-colors"
+                              >
+                                <span className="material-symbols-outlined text-[18px]">add</span>
+                              </button>
+                            </div>
+                          );
+                        }
+
+                        return (
+                          <button
+                            onClick={() => handleAddToCart(item.id)}
+                            disabled={addingToCart === item.id}
+                            className={`flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-bold transition-colors ${
+                              addingToCart === item.id
+                                ? "bg-green-500 text-white"
+                                : "bg-primary hover:bg-orange-600 text-white shadow-sm shadow-orange-200"
+                            }`}
+                          >
+                            {addingToCart === item.id ? "Added!" : "Add"}
+                            <span className="material-symbols-outlined text-[18px]">
+                              {addingToCart === item.id ? "check" : "add"}
+                            </span>
+                          </button>
+                        );
+                      })()}
                     </div>
                   </div>
                 </div>
