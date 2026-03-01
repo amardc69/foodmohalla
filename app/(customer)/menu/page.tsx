@@ -6,6 +6,14 @@ import { useSearchParams } from "next/navigation";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { MenuItem } from "@/lib/types";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+  SheetFooter,
+} from "@/components/ui/sheet";
 
 import { useSession } from "next-auth/react";
 import { useCartUserId } from "@/lib/useGuestId";
@@ -19,6 +27,14 @@ const categoryIcons: Record<string, string> = {
   desi: "restaurant",
 };
 
+const addons = [
+  { name: "Extra Cheese Slice", price: 1.5 },
+  { name: "Extra Paneer Patty", price: 3.0 },
+  { name: "Peri Peri Sprinkles", price: 0.5 },
+];
+
+const instructions = ["No Onions", "No Mayo", "Less Spicy"];
+
 function MenuContent() {
   const searchParams = useSearchParams();
   const initialCategory = searchParams.get("category") || "";
@@ -27,6 +43,11 @@ function MenuContent() {
   const [vegOnly, setVegOnly] = useState(false);
   const [activeCategory, setActiveCategory] = useState(initialCategory);
   const [addingToCart, setAddingToCart] = useState<string | null>(null);
+
+  const [selectedItemForSheet, setSelectedItemForSheet] = useState<any | null>(null);
+  const [sheetQuantity, setSheetQuantity] = useState(1);
+  const [selectedAddons, setSelectedAddons] = useState<string[]>([]);
+  const [selectedInstructions, setSelectedInstructions] = useState<string[]>([]);
 
   const { data: session } = useSession();
   const userId = useCartUserId(session);
@@ -49,23 +70,54 @@ function MenuContent() {
     }, {} as Record<string, any[]>);
   }, [items]);
 
-  async function handleAddToCart(itemId: string) {
-    if (!userId) return;
-    setAddingToCart(itemId);
+  function openAddSheet(item: any) {
+    setSelectedItemForSheet(item);
+    setSheetQuantity(1);
+    setSelectedAddons([]);
+    setSelectedInstructions([]);
+  }
+
+  function toggleAddon(addon: string) {
+    setSelectedAddons((prev) =>
+      prev.includes(addon)
+        ? prev.filter((a) => a !== addon)
+        : [...prev, addon]
+    );
+  }
+
+  function toggleInstruction(inst: string) {
+    setSelectedInstructions((prev) =>
+      prev.includes(inst)
+        ? prev.filter((i) => i !== inst)
+        : [...prev, inst]
+    );
+  }
+
+  async function handleSheetAddToCart() {
+    if (!selectedItemForSheet || !userId) return;
+    setAddingToCart(selectedItemForSheet.id);
+    
+    const enrichedAddons = selectedAddons.map(name => {
+      const addon = addons.find(a => a.name === name);
+      return { name, price: addon?.price || 0 };
+    });
+
     try {
       await addToCart({
         userId,
-        menuItemId: itemId,
-        quantity: 1,
-        addons: [],
-        instructions: []
+        menuItemId: selectedItemForSheet.id,
+        quantity: sheetQuantity,
+        addons: enrichedAddons,
+        instructions: selectedInstructions
       });
+      setSelectedItemForSheet(null);
     } finally {
       setTimeout(() => setAddingToCart(null), 500);
     }
   }
 
   const categoryList = Object.keys(grouped);
+  const relatedItems = selectedItemForSheet ? items.filter((i: any) => i.id !== selectedItemForSheet.id).slice(0, 2) : [];
 
   return (
     <div className="flex flex-1 max-w-[1440px] mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 gap-8">
@@ -256,7 +308,7 @@ function MenuContent() {
 
                         return (
                           <button
-                            onClick={() => handleAddToCart(item.id)}
+                            onClick={() => openAddSheet(item)}
                             disabled={addingToCart === item.id}
                             className={`flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-bold transition-colors ${
                               addingToCart === item.id
@@ -287,6 +339,162 @@ function MenuContent() {
           </div>
         )}
       </main>
+
+      <Sheet open={!!selectedItemForSheet} onOpenChange={(open) => !open && setSelectedItemForSheet(null)}>
+        <SheetContent side="right" className="w-[400px] sm:w-[540px] overflow-y-auto z-[100] border-l-0 shadow-2xl">
+          {selectedItemForSheet && (
+            <div className="flex flex-col h-full">
+              <SheetHeader className="text-left mb-6">
+                <SheetTitle className="text-2xl font-bold text-slate-900">{selectedItemForSheet.name}</SheetTitle>
+                <SheetDescription className="text-slate-500">
+                  {selectedItemForSheet.description}
+                </SheetDescription>
+              </SheetHeader>
+
+              <div className="flex-1 space-y-8">
+                {/* Add-ons */}
+                <div>
+                  <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
+                    Choice of Add-ons
+                    <span className="text-xs font-normal text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+                      Optional
+                    </span>
+                  </h3>
+                  <div className="space-y-3">
+                    {addons.map((addon) => (
+                      <label
+                        key={addon.name}
+                        className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer hover:border-primary transition-colors bg-white ${
+                          selectedAddons.includes(addon.name)
+                            ? "border-primary bg-primary/5"
+                            : "border-slate-200"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <input
+                            className="size-5 rounded border-gray-300 text-primary focus:ring-primary bg-transparent"
+                            type="checkbox"
+                            checked={selectedAddons.includes(addon.name)}
+                            onChange={() => toggleAddon(addon.name)}
+                          />
+                          <span className="text-sm font-medium">{addon.name}</span>
+                        </div>
+                        <span className="text-sm text-slate-500">
+                          +₹{addon.price.toFixed(2)}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Instructions */}
+                <div>
+                  <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
+                    Special Instructions
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {instructions.map((inst) => (
+                      <label key={inst} className="cursor-pointer">
+                        <input
+                          className="peer sr-only"
+                          type="checkbox"
+                          checked={selectedInstructions.includes(inst)}
+                          onChange={() => toggleInstruction(inst)}
+                        />
+                        <span className="px-4 py-2 rounded-full border border-slate-200 bg-white text-sm text-slate-500 peer-checked:bg-primary peer-checked:text-white peer-checked:border-primary transition-all select-none">
+                          {inst}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Frequently Bought Together */}
+                {relatedItems.length > 0 && (
+                  <div>
+                    <h3 className="text-lg font-bold mb-4">Frequently Bought Together</h3>
+                    <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar snap-x">
+                      {relatedItems.map((related: any) => (
+                        <Link
+                          key={related.id}
+                          href={`/menu/${related.id}`}
+                          className="snap-start shrink-0 w-40 bg-white rounded-xl border border-slate-200 p-2 flex flex-col hover:shadow-md transition-shadow"
+                        >
+                          <div className="w-full h-24 rounded-lg overflow-hidden mb-2 bg-slate-100">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              className="w-full h-full object-cover"
+                              alt={related.name}
+                              src={related.image}
+                            />
+                          </div>
+                          <h4 className="font-bold text-[13px] mb-1 truncate">
+                            {related.name}
+                          </h4>
+                          <div className="flex items-center justify-between mt-auto">
+                            <span className="text-xs font-semibold text-slate-500">
+                              ₹{related.price.toFixed(2)}
+                            </span>
+                            <span className="size-6 flex items-center justify-center bg-slate-100 rounded-md hover:bg-primary hover:text-white transition-colors gap-0.5"
+                                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); openAddSheet(related); }} >
+                              <span className="material-symbols-outlined text-[14px]">
+                                add
+                              </span>
+                            </span>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Footer / Cart Action */}
+              <div className="pt-6 mt-6 border-t border-slate-200 px-1 pb-4">
+                <div className="flex items-center justify-between bg-white border border-slate-200 rounded-xl px-4 py-2 mb-4 w-32 self-start">
+                  <button
+                    onClick={() => setSheetQuantity(Math.max(1, sheetQuantity - 1))}
+                    className="size-6 flex items-center justify-center rounded-md hover:bg-slate-100 text-slate-600 transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">remove</span>
+                  </button>
+                  <span className="font-bold text-sm w-4 text-center">{sheetQuantity}</span>
+                  <button
+                    onClick={() => setSheetQuantity(sheetQuantity + 1)}
+                    className="size-6 flex items-center justify-center rounded-md hover:bg-slate-100 text-slate-600 transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">add</span>
+                  </button>
+                </div>
+                {(() => {
+                  const addonTotal = selectedAddons.reduce((sum, name) => {
+                    const addon = addons.find((a) => a.name === name);
+                    return sum + (addon?.price || 0);
+                  }, 0);
+                  const totalPrice = (selectedItemForSheet.price + addonTotal) * sheetQuantity;
+
+                  return (
+                    <button
+                      onClick={handleSheetAddToCart}
+                      disabled={addingToCart === selectedItemForSheet.id}
+                      className={`w-full font-bold text-lg py-3 rounded-xl shadow-lg flex items-center justify-center gap-3 transition-transform active:scale-[0.98] ${
+                        addingToCart === selectedItemForSheet.id
+                          ? "bg-green-500 text-white shadow-green-500/30"
+                          : "bg-primary hover:bg-orange-600 text-white shadow-orange-500/30"
+                      }`}
+                    >
+                      <span>{addingToCart === selectedItemForSheet.id ? "Added!" : "Add to Cart"}</span>
+                      <span className="bg-white/20 px-2 py-0.5 rounded text-sm font-semibold">
+                        ₹{totalPrice.toFixed(2)}
+                      </span>
+                    </button>
+                  );
+                })()}
+              </div>
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
