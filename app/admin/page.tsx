@@ -111,6 +111,7 @@ function getMapsLink(order: any): string | null {
 export default function AdminDashboard() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
+  const [statsPeriod, setStatsPeriod] = useState("today");
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [showStatusMenu, setShowStatusMenu] = useState<string | null>(null);
 
@@ -124,7 +125,7 @@ export default function AdminDashboard() {
   const knownOrderIds = useRef<Set<string>>(new Set());
   const isFirstLoad = useRef(true);
 
-  const data = useQuery(api.orders.getOrders, { search, statusFilter });
+  const data = useQuery(api.orders.getOrders, { search, statusFilter, statsPeriod });
   const updateStatus = useMutation(api.orders.updateOrderStatus);
   const acceptOrderMutation = useMutation(api.orders.acceptOrder);
   const rejectOrderMutation = useMutation(api.orders.rejectOrder);
@@ -237,23 +238,43 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {[
-          { icon: "attach_money", label: "Total Revenue (Delivered)", value: stats.totalRevenue, gradient: "from-emerald-500 to-green-600" },
-          { icon: "pending_actions", label: "Pending Orders", value: String(stats.pendingOrders), gradient: "from-amber-500 to-orange-600" },
-          { icon: "check_circle", label: "Delivered Today", value: String(stats.deliveredToday), gradient: "from-blue-500 to-indigo-600" },
-        ].map((stat) => (
-          <div key={stat.label} className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between mb-4">
-              <div className={`p-2.5 bg-gradient-to-br ${stat.gradient} rounded-lg text-white shadow-sm`}>
-                <span className="material-symbols-outlined">{stat.icon}</span>
+      {/* Stats Period Selector + Cards */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          {(["today", "week", "all"] as const).map((p) => {
+            const labels: Record<string, string> = { today: "Today", week: "This Week", all: "All Time" };
+            return (
+              <button
+                key={p}
+                onClick={() => setStatsPeriod(p)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  statsPeriod === p
+                    ? "bg-text-main text-white shadow-sm"
+                    : "bg-white text-text-muted border border-gray-200 hover:border-gray-300"
+                }`}
+              >
+                {labels[p]}
+              </button>
+            );
+          })}
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[
+            { icon: "attach_money", label: `Revenue (${statsPeriod === "today" ? "Today" : statsPeriod === "week" ? "This Week" : "All Time"})`, value: stats.totalRevenue, gradient: "from-emerald-500 to-green-600" },
+            { icon: "pending_actions", label: `Pending Orders`, value: String(stats.pendingOrders), gradient: "from-amber-500 to-orange-600" },
+            { icon: "check_circle", label: `Delivered (${statsPeriod === "today" ? "Today" : statsPeriod === "week" ? "This Week" : "All Time"})`, value: String(stats.deliveredToday), gradient: "from-blue-500 to-indigo-600" },
+          ].map((stat) => (
+            <div key={stat.label} className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-between mb-4">
+                <div className={`p-2.5 bg-gradient-to-br ${stat.gradient} rounded-lg text-white shadow-sm`}>
+                  <span className="material-symbols-outlined">{stat.icon}</span>
+                </div>
               </div>
+              <p className="text-text-muted text-sm font-medium">{stat.label}</p>
+              <h3 className="text-2xl font-bold text-text-main mt-1">{stat.value}</h3>
             </div>
-            <p className="text-text-muted text-sm font-medium">{stat.label}</p>
-            <h3 className="text-2xl font-bold text-text-main mt-1">{stat.value}</h3>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
       {/* Filter Tray */}

@@ -10,16 +10,28 @@ function TrackingContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get("order") as Id<"orders"> | null;
 
-  // Fetch the latest order via the getOrders query (we'll find our specific one)
-  const data = useQuery(api.orders.getOrders, {});
-  const allOrders = data?.orders || [];
+  // Use getOrderById if we have an orderId, otherwise fallback to latest
+  const order = useQuery(
+    api.orders.getOrderById,
+    orderId ? { orderId: orderId } : "skip"
+  );
 
-  // Find the specific order, or fall back to the most recent one
-  const order = orderId
-    ? allOrders.find((o: any) => o._id === orderId)
-    : allOrders[0];
+  // Fallback: get latest order if no orderId
+  const fallbackData = useQuery(
+    api.orders.getOrders,
+    orderId ? "skip" : {}
+  );
+  const displayOrder = orderId ? order : fallbackData?.orders?.[0];
 
-  if (!order) {
+  if (displayOrder === undefined) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (!displayOrder) {
     return (
       <div className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
         <div className="text-center py-20">
@@ -37,7 +49,7 @@ function TrackingContent() {
 
   // Determine step progress based on status
   const statusSteps = ["Pending", "Preparing", "Out for Delivery", "Delivered"];
-  const currentStepIndex = statusSteps.indexOf(order.status);
+  const currentStepIndex = statusSteps.indexOf(displayOrder.status);
 
   const steps = [
     { icon: "receipt_long", label: "Order\nReceived", active: currentStepIndex >= 0 },
@@ -47,6 +59,13 @@ function TrackingContent() {
   ];
 
   const progressWidth = currentStepIndex >= 3 ? "100%" : `${(currentStepIndex / 3) * 100}%`;
+
+  // Google Maps link — prioritize lat/lng
+  const mapsLink = displayOrder.deliveryLat && displayOrder.deliveryLng
+    ? `https://www.google.com/maps/dir/?api=1&destination=${displayOrder.deliveryLat},${displayOrder.deliveryLng}`
+    : displayOrder.deliveryAddress
+      ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(displayOrder.deliveryAddress)}`
+      : null;
 
   return (
     <div className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
@@ -59,7 +78,7 @@ function TrackingContent() {
           Order Placed Successfully!
         </h1>
         <p className="text-text-muted text-lg">
-          Order {order.displayId} • Estimated delivery in{" "}
+          Order {displayOrder.displayId} • Estimated delivery in{" "}
           <span className="text-primary font-bold">25-35 mins</span>
         </p>
       </div>
@@ -102,10 +121,11 @@ function TrackingContent() {
             <div className="mt-8 p-4 bg-primary/5 rounded-lg border border-primary/10 flex items-start gap-3">
               <span className="material-symbols-outlined text-primary mt-0.5">info</span>
               <p className="text-sm text-text-main">
-                {order.status === "Pending" && "Your order has been received and will be prepared shortly."}
-                {order.status === "Preparing" && "Your order is being prepared by the restaurant. Hang tight!"}
-                {order.status === "Out for Delivery" && "Your order is on the way! Your delivery partner is heading towards your location."}
-                {order.status === "Delivered" && "Your order has been delivered. Enjoy your meal!"}
+                {displayOrder.status === "Pending" && "Your order has been received and will be prepared shortly."}
+                {displayOrder.status === "Preparing" && "Your order is being prepared by the restaurant. Hang tight!"}
+                {displayOrder.status === "Out for Delivery" && "Your order is on the way! Your delivery partner is heading towards your location."}
+                {displayOrder.status === "Delivered" && "Your order has been delivered. Enjoy your meal!"}
+                {displayOrder.status === "Rejected" && "Unfortunately, your order was rejected by the restaurant."}
               </p>
             </div>
           </div>
@@ -142,10 +162,10 @@ function TrackingContent() {
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-bold text-text-main">Order Summary</h3>
-              <span className="text-sm text-text-muted">{order.items.length} Item{order.items.length !== 1 ? "s" : ""}</span>
+              <span className="text-sm text-text-muted">{displayOrder.items.length} Item{displayOrder.items.length !== 1 ? "s" : ""}</span>
             </div>
             <div className="divide-y divide-gray-100">
-              {order.items.map((item: any, i: number) => (
+              {displayOrder.items.map((item: any, i: number) => (
                 <div key={i} className="py-3 flex justify-between items-center">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
@@ -167,13 +187,52 @@ function TrackingContent() {
             </div>
             <div className="mt-4 pt-4 border-t border-gray-100 flex justify-between items-center">
               <span className="font-bold text-text-main">Total Paid</span>
-              <span className="font-bold text-xl text-primary">₹{order.totalPrice.toFixed(2)}</span>
+              <span className="font-bold text-xl text-primary">₹{displayOrder.totalPrice.toFixed(2)}</span>
             </div>
           </div>
         </div>
 
         {/* Right: Delivery Info & Support */}
         <div className="space-y-6">
+          {/* Delivery Address */}
+          {displayOrder.deliveryAddress && (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <h3 className="text-sm font-bold text-text-muted uppercase tracking-wider mb-4">
+                Delivery Address
+              </h3>
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 shrink-0">
+                  <span className="material-symbols-outlined">location_on</span>
+                </div>
+                <div>
+                  <p className="text-sm text-text-main leading-relaxed">
+                    {displayOrder.deliveryFlat ? `${displayOrder.deliveryFlat}, ` : ""}
+                    {displayOrder.deliveryAddress}
+                  </p>
+                  {displayOrder.deliveryLandmark && (
+                    <p className="text-xs text-text-muted mt-1">Landmark: {displayOrder.deliveryLandmark}</p>
+                  )}
+                  {displayOrder.deliveryLat && displayOrder.deliveryLng && (
+                    <p className="text-xs text-gray-400 mt-1 font-mono">
+                      {displayOrder.deliveryLat.toFixed(6)}, {displayOrder.deliveryLng.toFixed(6)}
+                    </p>
+                  )}
+                  {mapsLink && (
+                    <a
+                      href={mapsLink}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-3 inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors font-medium border border-blue-200"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">directions</span>
+                      View Directions
+                    </a>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Restaurant */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <h3 className="text-sm font-bold text-text-muted uppercase tracking-wider mb-4">

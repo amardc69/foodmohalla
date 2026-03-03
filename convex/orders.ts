@@ -37,6 +37,7 @@ export const getOrders = query({
   args: {
     search: v.optional(v.string()),
     statusFilter: v.optional(v.string()),
+    statsPeriod: v.optional(v.string()), // "today" | "week" | "all"
   },
   handler: async (ctx, args) => {
     let allOrders;
@@ -87,30 +88,44 @@ export const getOrders = query({
       })
     );
 
-    // Stats calculation — "today" based on UTC day
-    const todayStart = new Date();
+    // Stats calculation with period filter
+    const now = new Date();
+    const todayStart = new Date(now);
     todayStart.setHours(0, 0, 0, 0);
     const todayMs = todayStart.getTime();
 
-    // Use all orders for stats (not filtered)
-    const allForStats = await ctx.db.query("orders").collect();
+    const weekStart = new Date(now);
+    weekStart.setDate(weekStart.getDate() - weekStart.getDay()); // start of week (Sunday)
+    weekStart.setHours(0, 0, 0, 0);
+    const weekMs = weekStart.getTime();
 
-    const pendingOrders = allForStats.filter(
+    const allForStats = await ctx.db.query("orders").collect();
+    const period = args.statsPeriod || "today";
+
+    let periodStart = 0; // "all" = no filter
+    if (period === "today") periodStart = todayMs;
+    else if (period === "week") periodStart = weekMs;
+
+    const periodOrders = periodStart > 0
+      ? allForStats.filter((o) => o._creationTime >= periodStart)
+      : allForStats;
+
+    const pendingOrders = periodOrders.filter(
       (o) => o.status === "Pending" || o.status === "Preparing"
     ).length;
 
-    const deliveredToday = allForStats.filter(
-      (o) => o.status === "Delivered" && o._creationTime >= todayMs
+    const deliveredCount = periodOrders.filter(
+      (o) => o.status === "Delivered"
     ).length;
 
-    const totalRev = allForStats
+    const totalRev = periodOrders
       .filter((o) => o.status === "Delivered")
       .reduce((sum, o) => sum + o.totalPrice, 0);
 
     const stats = {
       totalRevenue: `₹${totalRev.toFixed(0)}`,
       pendingOrders,
-      deliveredToday,
+      deliveredToday: deliveredCount,
     };
 
     let filtered = enriched;
