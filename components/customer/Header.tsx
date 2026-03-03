@@ -155,37 +155,43 @@ export default function CustomerHeader() {
         </div>
       </header>
 
-      {/* Mobile Navigation Menu */}
+      {/* Mobile Navigation Menu — overlay, not push */}
       {mobileMenuOpen && (
-        <div className="lg:hidden sticky top-[60px] z-40 bg-white border-b border-slate-200 shadow-lg animate-in slide-in-from-top-2 duration-200">
-          <nav className="flex flex-col px-4 py-3 gap-1">
-            {navLinks.map((link) => (
+        <>
+          <div
+            className="lg:hidden fixed inset-0 bg-black/30 z-40 backdrop-blur-sm"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+          <div className="lg:hidden fixed top-[60px] left-0 right-0 z-50 bg-white border-b border-slate-200 shadow-xl animate-in slide-in-from-top-2 duration-200">
+            <nav className="flex flex-col px-4 py-3 gap-1">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors text-sm font-medium ${
+                    pathname === link.href
+                      ? "bg-primary/10 text-primary font-bold"
+                      : "text-slate-700 hover:bg-slate-50"
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-[20px]">
+                    {link.label === "Home" ? "home" : link.label === "Menu" ? "restaurant_menu" : link.label === "My Orders" ? "receipt_long" : "person"}
+                  </span>
+                  {link.label}
+                </Link>
+              ))}
               <Link
-                key={link.href}
-                href={link.href}
+                href="#"
                 onClick={() => setMobileMenuOpen(false)}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors text-sm font-medium ${
-                  pathname === link.href
-                    ? "bg-primary/10 text-primary font-bold"
-                    : "text-slate-700 hover:bg-slate-50"
-                }`}
+                className="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors text-sm font-medium text-slate-700 hover:bg-slate-50"
               >
-                <span className="material-symbols-outlined text-[20px]">
-                  {link.label === "Home" ? "home" : link.label === "Menu" ? "restaurant_menu" : link.label === "My Orders" ? "receipt_long" : "person"}
-                </span>
-                {link.label}
+                <span className="material-symbols-outlined text-[20px]">local_offer</span>
+                Offers
               </Link>
-            ))}
-            <Link
-              href="#"
-              onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors text-sm font-medium text-slate-700 hover:bg-slate-50"
-            >
-              <span className="material-symbols-outlined text-[20px]">local_offer</span>
-              Offers
-            </Link>
-          </nav>
-        </div>
+            </nav>
+          </div>
+        </>
       )}
     </>
   );

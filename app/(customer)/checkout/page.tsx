@@ -224,7 +224,7 @@ export default function CheckoutPage() {
     await clearCart({ userId });
     
     setTimeout(() => {
-      router.push(`/tracking?order=${orderId}`);
+      router.push(`/orders`);
     }, 1000);
   }
 

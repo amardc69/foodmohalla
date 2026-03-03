@@ -162,7 +162,9 @@ export default function AdminDashboard() {
   const [statusFilter, setStatusFilter] = useState("All");
   const [statsPeriod, setStatsPeriod] = useState("today");
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
-  const [showStatusMenu, setShowStatusMenu] = useState<string | null>(null);
+  // Status change dialog state
+  const [statusChangeOrder, setStatusChangeOrder] = useState<any>(null);
+  const [pendingStatus, setPendingStatus] = useState<string | null>(null);
 
   // New order notification state
   const [newOrderQueue, setNewOrderQueue] = useState<any[]>([]);
@@ -248,11 +250,16 @@ export default function AdminDashboard() {
 
   const handleStatusChange = useCallback(
     async (orderId: string, newStatus: string) => {
-      await updateStatus({ orderId: orderId as Id<"orders">, status: newStatus });
-      setShowStatusMenu(null);
-      if (selectedOrder && selectedOrder._id === orderId) {
-        setSelectedOrder((prev: any) => prev ? { ...prev, status: newStatus } : prev);
+      try {
+        await updateStatus({ orderId: orderId as Id<"orders">, status: newStatus });
+        if (selectedOrder && selectedOrder._id === orderId) {
+          setSelectedOrder((prev: any) => prev ? { ...prev, status: newStatus } : prev);
+        }
+      } catch (err: any) {
+        alert(err.message || "Failed to update status");
       }
+      setStatusChangeOrder(null);
+      setPendingStatus(null);
     },
     [updateStatus, selectedOrder]
   );
@@ -404,52 +411,21 @@ export default function AdminDashboard() {
                     <td className="px-6 py-4">
                       <p className="text-sm text-text-muted max-w-[200px] truncate">{order.itemsSummary}</p>
                     </td>
-                    <td className="px-6 py-4 relative">
+                    <td className="px-6 py-4">
                       {(() => {
                         const forwardOptions = getForwardStatuses(order.status);
-                        const canChange = forwardOptions.length > 0 || order.status !== "Delivered";
+                        const canChange = forwardOptions.length > 0 || (order.status !== "Delivered" && order.status !== "Rejected");
                         return (
-                          <>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (canChange) setShowStatusMenu(showStatusMenu === order._id ? null : order._id);
-                              }}
-                              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold ring-1 ${sc.bg} ${sc.text} ${sc.ring} hover:shadow-sm transition-all ${canChange ? "cursor-pointer" : "cursor-default opacity-80"}`}
-                            >
-                              {order.status}
-                              {canChange && <span className="material-symbols-outlined text-[14px]">expand_more</span>}
-                            </button>
-                            {showStatusMenu === order._id && (
-                              <div className="fixed z-50 bg-white rounded-lg shadow-xl border border-gray-200 py-1 min-w-[180px]" style={{ position: "absolute", top: "100%", left: 16, marginTop: 4 }} onClick={(e) => e.stopPropagation()}>
-                                {forwardOptions.map((s) => (
-                                  <button
-                                    key={s}
-                                    onClick={() => handleStatusChange(order._id, s)}
-                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors flex items-center gap-2 text-gray-700"
-                                  >
-                                    <span className={`w-2 h-2 rounded-full ${statusColors[s]?.bg} border border-gray-300`}></span>
-                                    {s}
-                                  </button>
-                                ))}
-                                {order.status !== "Rejected" && order.status !== "Delivered" && (
-                                  <>
-                                    <hr className="my-1" />
-                                    <button
-                                      onClick={() => handleStatusChange(order._id, "Rejected")}
-                                      className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2"
-                                    >
-                                      <span className="w-2 h-2 rounded-full bg-red-100 border border-red-300"></span>
-                                      Rejected
-                                    </button>
-                                  </>
-                                )}
-                                {forwardOptions.length === 0 && order.status !== "Rejected" && order.status !== "Delivered" && (
-                                  <p className="px-4 py-2 text-xs text-gray-400">No further status available</p>
-                                )}
-                              </div>
-                            )}
-                          </>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (canChange) { setStatusChangeOrder(order); setPendingStatus(null); }
+                            }}
+                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold ring-1 ${sc.bg} ${sc.text} ${sc.ring} hover:shadow-sm transition-all ${canChange ? "cursor-pointer" : "cursor-default opacity-80"}`}
+                          >
+                            {order.status}
+                            {canChange && <span className="material-symbols-outlined text-[14px]">expand_more</span>}
+                          </button>
                         );
                       })()}
                     </td>
@@ -731,10 +707,82 @@ export default function AdminDashboard() {
         </DialogContent>
       </Dialog>
 
-      {/* Click-away handler for status menu */}
-      {showStatusMenu && (
-        <div className="fixed inset-0 z-20" onClick={() => setShowStatusMenu(null)} />
-      )}
+      {/* ─── STATUS CHANGE CONFIRMATION DIALOG ──────────────────────────── */}
+      <Dialog open={!!statusChangeOrder} onOpenChange={(open) => { if (!open) { setStatusChangeOrder(null); setPendingStatus(null); } }}>
+        <DialogContent className="sm:max-w-[420px] gap-0 p-0">
+          <DialogHeader className="px-6 pt-6 pb-4 border-b">
+            <DialogTitle className="text-lg">Change Order Status</DialogTitle>
+            <DialogDescription>
+              {statusChangeOrder?.displayId} — currently <span className="font-bold">{statusChangeOrder?.status}</span>
+            </DialogDescription>
+          </DialogHeader>
+          {statusChangeOrder && (
+            <div className="px-6 py-5 space-y-3">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Move to:</p>
+              <div className="space-y-2">
+                {getForwardStatuses(statusChangeOrder.status).map((s) => {
+                  const sc2 = statusColors[s] || statusColors.Pending;
+                  return (
+                    <button
+                      key={s}
+                      onClick={() => setPendingStatus(s)}
+                      className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 transition-all text-sm font-medium ${
+                        pendingStatus === s
+                          ? "border-primary bg-primary/5 shadow-sm"
+                          : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className={`w-3 h-3 rounded-full ${sc2.bg} ring-2 ${sc2.ring}`}></span>
+                        <span>{s}</span>
+                      </div>
+                      {pendingStatus === s && (
+                        <span className="material-symbols-outlined text-primary text-[18px]">check_circle</span>
+                      )}
+                    </button>
+                  );
+                })}
+                {statusChangeOrder.status !== "Rejected" && statusChangeOrder.status !== "Delivered" && (
+                  <button
+                    onClick={() => setPendingStatus("Rejected")}
+                    className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 transition-all text-sm font-medium ${
+                      pendingStatus === "Rejected"
+                        ? "border-red-400 bg-red-50 shadow-sm"
+                        : "border-red-100 hover:border-red-200 hover:bg-red-50 text-red-600"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="w-3 h-3 rounded-full bg-red-100 ring-2 ring-red-200"></span>
+                      <span>Rejected</span>
+                    </div>
+                    {pendingStatus === "Rejected" && (
+                      <span className="material-symbols-outlined text-red-500 text-[18px]">check_circle</span>
+                    )}
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+          <DialogFooter className="px-6 py-4 border-t bg-muted/30">
+            <Button variant="outline" size="sm" onClick={() => { setStatusChangeOrder(null); setPendingStatus(null); }}>
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              disabled={!pendingStatus}
+              className={pendingStatus === "Rejected" ? "bg-red-600 hover:bg-red-700" : ""}
+              onClick={() => {
+                if (statusChangeOrder && pendingStatus) {
+                  handleStatusChange(statusChangeOrder._id, pendingStatus);
+                }
+              }}
+            >
+              <span className="material-symbols-outlined text-[16px] mr-1.5">check</span>
+              Confirm
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
