@@ -9,6 +9,7 @@
  */
 
 import type * as addresses from "../addresses.js";
+import type * as adminSettings from "../adminSettings.js";
 import type * as cart from "../cart.js";
 import type * as categories from "../categories.js";
 import type * as init from "../init.js";
@@ -25,6 +26,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   addresses: typeof addresses;
+  adminSettings: typeof adminSettings;
   cart: typeof cart;
   categories: typeof categories;
   init: typeof init;

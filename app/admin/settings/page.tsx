@@ -1,47 +1,180 @@
 "use client";
 
+import { useState, useEffect } from "react";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
+
+/* ─── Sound preview helpers (Web Audio API) ───────────────────────────────── */
+function playTing() {
+  try {
+    const ctx = new AudioContext();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.frequency.value = 1200;
+    osc.type = "sine";
+    gain.gain.setValueAtTime(0.5, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.5);
+  } catch { /* ignore */ }
+}
+
+function playDong() {
+  try {
+    const ctx = new AudioContext();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.frequency.value = 440;
+    osc.type = "sine";
+    gain.gain.setValueAtTime(0.6, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.8);
+  } catch { /* ignore */ }
+}
+
 export default function SettingsPage() {
+  const soundPref = useQuery(api.adminSettings.getSetting, { key: "notificationSound" });
+  const setSettingMutation = useMutation(api.adminSettings.setSetting);
+
+  const [selectedSound, setSelectedSound] = useState("ting");
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    if (soundPref) {
+      setSelectedSound(soundPref);
+    }
+  }, [soundPref]);
+
+  async function handleSave() {
+    await setSettingMutation({ key: "notificationSound", value: selectedSound });
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  }
+
+  function handlePreview(sound: string) {
+    if (sound === "dong") {
+      playDong();
+    } else {
+      playTing();
+    }
+  }
+
   return (
-    <div className="relative max-w-7xl mx-auto min-h-[60vh] flex flex-col">
-      {/* Blurred background content */}
-      <div className="flex-1 space-y-8 blur-sm select-none opacity-40 pointer-events-none">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h2 className="text-2xl md:text-3xl font-bold text-text-main tracking-tight">
-              System Settings
-            </h2>
-            <p className="text-text-muted mt-1">
-              Configure app-wide preferences, notifications, and store hours.
-            </p>
+    <div className="max-w-3xl mx-auto space-y-8">
+      {/* Header */}
+      <div>
+        <h2 className="text-2xl md:text-3xl font-bold text-text-main tracking-tight">
+          System Settings
+        </h2>
+        <p className="text-text-muted mt-1">
+          Configure app-wide preferences and notifications.
+        </p>
+      </div>
+
+      {/* Notification Sound */}
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div className="px-6 py-5 border-b border-gray-100 bg-gray-50/50">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-amber-100 rounded-lg text-amber-600">
+              <span className="material-symbols-outlined">notifications_active</span>
+            </div>
+            <div>
+              <h3 className="font-bold text-text-main">New Order Notification Sound</h3>
+              <p className="text-sm text-text-muted">Choose the sound that plays when a new order arrives</p>
+            </div>
           </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-           <div className="col-span-1 space-y-2">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="h-12 bg-white rounded-lg border border-gray-200"></div>
-              ))}
-           </div>
-           <div className="col-span-2 bg-white rounded-xl border border-gray-200 shadow-sm h-96 p-6">
-              <div className="space-y-6">
-                  <div className="h-8 w-1/3 bg-gray-100 rounded"></div>
-                  <div className="h-12 bg-gray-100 rounded-lg"></div>
-                  <div className="h-12 bg-gray-100 rounded-lg"></div>
-                  <div className="h-12 w-1/4 bg-blue-100 rounded-lg"></div>
+
+        <div className="p-6 space-y-4">
+          {[
+            {
+              id: "ting",
+              label: "Ting",
+              description: "A bright, high-pitched bell sound",
+              icon: "music_note",
+              color: "from-blue-500 to-cyan-500",
+            },
+            {
+              id: "dong",
+              label: "Dong",
+              description: "A deep, resonant bell sound",
+              icon: "doorbell",
+              color: "from-purple-500 to-indigo-500",
+            },
+          ].map((sound) => (
+            <div
+              key={sound.id}
+              onClick={() => setSelectedSound(sound.id)}
+              className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                selectedSound === sound.id
+                  ? "border-primary bg-primary/5 shadow-sm"
+                  : "border-gray-200 hover:border-primary/40"
+              }`}
+            >
+              <div className={`p-3 bg-gradient-to-br ${sound.color} rounded-xl text-white shadow-sm`}>
+                <span className="material-symbols-outlined">{sound.icon}</span>
               </div>
-           </div>
+              <div className="flex-1">
+                <h4 className="font-bold text-text-main">{sound.label}</h4>
+                <p className="text-sm text-text-muted">{sound.description}</p>
+              </div>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handlePreview(sound.id);
+                }}
+                className="p-2 rounded-lg border border-gray-200 text-gray-500 hover:text-primary hover:border-primary/40 hover:bg-primary/5 transition-all"
+                title="Preview sound"
+              >
+                <span className="material-symbols-outlined text-[20px]">play_arrow</span>
+              </button>
+              {selectedSound === sound.id && (
+                <span className="material-symbols-outlined text-primary">check_circle</span>
+              )}
+            </div>
+          ))}
+        </div>
+
+        <div className="px-6 pb-6">
+          <button
+            onClick={handleSave}
+            className="w-full bg-primary hover:bg-primary-dark text-white font-bold py-3 rounded-xl transition-colors shadow-sm shadow-primary/20 flex items-center justify-center gap-2"
+          >
+            {saved ? (
+              <>
+                <span className="material-symbols-outlined text-[18px]">check</span>
+                Saved!
+              </>
+            ) : (
+              <>
+                <span className="material-symbols-outlined text-[18px]">save</span>
+                Save Settings
+              </>
+            )}
+          </button>
         </div>
       </div>
-      
-      {/* Watermark Overlay */}
-      <div className="absolute inset-0 flex items-center justify-center z-10">
-        <div className="bg-white/80 backdrop-blur-md px-10 py-8 rounded-3xl shadow-2xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center transform -rotate-6">
-          <span className="material-symbols-outlined text-6xl text-red-500 mb-3">lock</span>
-          <h2 className="text-4xl sm:text-5xl font-black text-slate-800 tracking-widest uppercase text-center drop-shadow-sm">
-            Not Enabled
-          </h2>
-          <p className="text-sm font-bold text-slate-500 mt-3 uppercase tracking-widest text-center">
-            Module restricted
-          </p>
+
+      {/* Additional settings can be added here */}
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
+            <span className="material-symbols-outlined">info</span>
+          </div>
+          <div>
+            <h3 className="font-bold text-text-main">More Settings</h3>
+            <p className="text-sm text-text-muted">Additional settings will be available soon</p>
+          </div>
+        </div>
+        <div className="space-y-3 opacity-40 pointer-events-none">
+          <div className="h-12 bg-gray-100 rounded-lg"></div>
+          <div className="h-12 bg-gray-100 rounded-lg"></div>
+          <div className="h-12 bg-gray-100 rounded-lg"></div>
         </div>
       </div>
     </div>

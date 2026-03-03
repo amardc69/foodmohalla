@@ -36,9 +36,20 @@ function formatItemsSummary(items: Array<{ name: string; quantity: number }>): s
 export const getOrders = query({
   args: {
     search: v.optional(v.string()),
+    statusFilter: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const allOrders = await ctx.db.query("orders").order("desc").collect();
+    let allOrders;
+
+    if (args.statusFilter && args.statusFilter !== "All") {
+      allOrders = await ctx.db
+        .query("orders")
+        .withIndex("by_status", (q) => q.eq("status", args.statusFilter!))
+        .order("desc")
+        .collect();
+    } else {
+      allOrders = await ctx.db.query("orders").order("desc").collect();
+    }
 
     // Enrich orders with computed display fields
     const enriched = allOrders.map((o) => ({
@@ -54,15 +65,18 @@ export const getOrders = query({
     todayStart.setHours(0, 0, 0, 0);
     const todayMs = todayStart.getTime();
 
-    const pendingOrders = enriched.filter(
+    // Use all orders for stats (not filtered)
+    const allForStats = await ctx.db.query("orders").collect();
+
+    const pendingOrders = allForStats.filter(
       (o) => o.status === "Pending" || o.status === "Preparing"
     ).length;
 
-    const deliveredToday = enriched.filter(
+    const deliveredToday = allForStats.filter(
       (o) => o.status === "Delivered" && o._creationTime >= todayMs
     ).length;
 
-    const totalRev = enriched
+    const totalRev = allForStats
       .filter((o) => o.status === "Delivered")
       .reduce((sum, o) => sum + o.totalPrice, 0);
 
@@ -85,7 +99,22 @@ export const getOrders = query({
     return {
       orders: filtered,
       stats,
-      total: enriched.length,
+      total: allForStats.length,
+    };
+  },
+});
+
+export const getOrderById = query({
+  args: { orderId: v.id("orders") },
+  handler: async (ctx, args) => {
+    const order = await ctx.db.get(args.orderId);
+    if (!order) return null;
+    return {
+      ...order,
+      displayId: formatOrderId(order._id),
+      timeAgo: formatTimeAgo(order._creationTime),
+      itemsSummary: formatItemsSummary(order.items),
+      displayPrice: `₹${order.totalPrice.toFixed(2)}`,
     };
   },
 });
@@ -101,6 +130,32 @@ export const updateOrderStatus = mutation({
       throw new Error(`Order ${args.orderId} not found`);
     }
     await ctx.db.patch(args.orderId, { status: args.status });
+  },
+});
+
+export const acceptOrder = mutation({
+  args: { orderId: v.id("orders") },
+  handler: async (ctx, args) => {
+    const order = await ctx.db.get(args.orderId);
+    if (!order) throw new Error("Order not found");
+    if (order.status !== "Pending") throw new Error("Order is not pending");
+    await ctx.db.patch(args.orderId, { status: "Preparing" });
+  },
+});
+
+export const rejectOrder = mutation({
+  args: {
+    orderId: v.id("orders"),
+    reason: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const order = await ctx.db.get(args.orderId);
+    if (!order) throw new Error("Order not found");
+    if (order.status !== "Pending") throw new Error("Order is not pending");
+    await ctx.db.patch(args.orderId, {
+      status: "Rejected",
+      rejectionReason: args.reason,
+    });
   },
 });
 
@@ -122,12 +177,34 @@ export const createOrder = mutation({
     appliedCoupon: v.optional(v.string()),
     discountAmount: v.optional(v.number()),
     deliveryAddress: v.optional(v.string()),
+    deliveryLat: v.optional(v.number()),
+    deliveryLng: v.optional(v.number()),
+    deliveryFlat: v.optional(v.string()),
+    deliveryLandmark: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    // Try to get customer name from the users table
+    let customerName = "Guest User";
+    let customerAvatar = "https://ui-avatars.com/api/?name=Guest+User";
+
+    if (args.userId) {
+      try {
+        const user = await ctx.db.get(args.userId as any);
+        if (user && "name" in user) {
+          customerName = (user as any).name;
+          customerAvatar =
+            (user as any).avatar ||
+            `https://ui-avatars.com/api/?name=${encodeURIComponent(customerName)}&background=ec7f13&color=fff`;
+        }
+      } catch {
+        // fallback to default
+      }
+    }
+
     const orderId = await ctx.db.insert("orders", {
       customer: {
-        name: args.userId ? `User ${args.userId.substring(0, 4)}` : "Guest User",
-        avatar: "https://ui-avatars.com/api/?name=Guest+User",
+        name: customerName,
+        avatar: customerAvatar,
       },
       items: args.items,
       status: "Pending",
@@ -136,6 +213,10 @@ export const createOrder = mutation({
       appliedCoupon: args.appliedCoupon,
       discountAmount: args.discountAmount,
       deliveryAddress: args.deliveryAddress,
+      deliveryLat: args.deliveryLat,
+      deliveryLng: args.deliveryLng,
+      deliveryFlat: args.deliveryFlat,
+      deliveryLandmark: args.deliveryLandmark,
       userId: args.userId,
     });
 

@@ -55,19 +55,25 @@ export default defineSchema({
         instructions: v.optional(v.array(v.string())),
       })
     ),
-    status: v.string(), // "Pending", "Preparing", "Out for Delivery", "Delivered"
+    status: v.string(), // "Pending", "Preparing", "Out for Delivery", "Delivered", "Rejected"
     totalPrice: v.number(),
     paymentMethod: v.optional(v.string()), // "cod", "upi"
     appliedCoupon: v.optional(v.string()),
     discountAmount: v.optional(v.number()),
     deliveryAddress: v.optional(v.string()),
-    userId: v.optional(v.string()), // Added for user-specific orders
+    deliveryLat: v.optional(v.number()),
+    deliveryLng: v.optional(v.number()),
+    deliveryFlat: v.optional(v.string()),
+    deliveryLandmark: v.optional(v.string()),
+    rejectionReason: v.optional(v.string()),
+    userId: v.optional(v.string()),
   })
     .index("by_status", ["status"])
     .index("by_user", ["userId"]),
 
   addresses: defineTable({
     id: v.string(),
+    userId: v.string(),
     label: v.string(),
     icon: v.string(),
     address: v.string(),
@@ -77,7 +83,7 @@ export default defineSchema({
     landmark: v.optional(v.string()),
     lat: v.optional(v.number()),
     lng: v.optional(v.number()),
-  }),
+  }).index("by_user", ["userId"]),
 
   carts: defineTable({
     userId: v.string(), // Use sessionId for guests or userId for logged in
@@ -95,4 +101,9 @@ export default defineSchema({
     role: v.string(), // "admin" | "customer"
     avatar: v.optional(v.string()),
   }).index("by_username", ["username"]),
+
+  adminSettings: defineTable({
+    key: v.string(),
+    value: v.string(),
+  }).index("by_key", ["key"]),
 });

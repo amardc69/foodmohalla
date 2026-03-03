@@ -30,7 +30,8 @@ export default function CheckoutPage() {
   const clearCart = useMutation(api.cart.clearCart);
   const createOrder = useMutation(api.orders.createOrder);
 
-  const addressesDb = useQuery(api.addresses.getAddresses) || [];
+  const authUserId = (session?.user as any)?.id;
+  const addressesDb = useQuery(api.addresses.getAddresses, authUserId ? { userId: authUserId } : "skip") || [];
   const selectAddressMutation = useMutation(api.addresses.selectAddress);
   
   const selectedAddress = addressesDb.find((a: any) => a.isSelected) || addressesDb[0];
@@ -156,7 +157,12 @@ export default function CheckoutPage() {
        setLocationError("Please enter or fetch an address");
        return;
     }
+    if (!authUserId) {
+       setLocationError("Please log in to save address");
+       return;
+    }
     await addAddressMutation({
+      userId: authUserId,
       label: newLabel,
       icon: newLabel === "Home" ? "home" : newLabel === "Work" ? "work" : "location_on",
       address: newAddress,
@@ -209,6 +215,10 @@ export default function CheckoutPage() {
       appliedCoupon: appliedCoupon?.code,
       discountAmount: discountAmount,
       deliveryAddress: selectedAddress?.address,
+      deliveryLat: selectedAddress?.lat,
+      deliveryLng: selectedAddress?.lng,
+      deliveryFlat: selectedAddress?.flat,
+      deliveryLandmark: selectedAddress?.landmark,
     });
     
     await clearCart({ userId });
@@ -332,7 +342,7 @@ export default function CheckoutPage() {
                   {addressesDb.map((addr: any) => (
                     <div
                       key={addr.id}
-                      onClick={() => selectAddressMutation({ id: addr.id })}
+                      onClick={() => authUserId && selectAddressMutation({ userId: authUserId, id: addr.id })}
                       className={`border-2 rounded-lg p-4 relative cursor-pointer group ${addr.isSelected ? "border-primary bg-primary/5" : "border-gray-200 hover:border-primary/50"}`}
                     >
                       {addr.isSelected && (

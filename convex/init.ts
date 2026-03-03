@@ -202,6 +202,7 @@ const initialOrders = [
 const initialAddresses = [
   {
     id: "home",
+    userId: "seed_user",
     label: "Home",
     icon: "home",
     address: "Block B, Flat 402, Sunshine Apartments, Sector 14, Food Mohalla City, 110022",
@@ -210,6 +211,7 @@ const initialAddresses = [
   },
   {
     id: "work",
+    userId: "seed_user",
     label: "Work",
     icon: "work",
     address: "Tech Park, Building 5, 3rd Floor, Sector 62, Innovation Zone",
@@ -245,6 +247,12 @@ export const seed = mutation({
       phone: "+91 00000 00000",
       role: "admin",
       avatar: "https://ui-avatars.com/api/?name=Admin&background=ec7f13&color=fff",
+    });
+
+    // Seed default admin settings
+    await ctx.db.insert("adminSettings", {
+      key: "notificationSound",
+      value: "ting",
     });
 
     return "Seeded successfully!";
