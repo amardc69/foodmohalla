@@ -115,10 +115,12 @@ export default function CustomizeMenuPage() {
       }
 
       if (editingId) {
+        // Strip fields not accepted by updateMenuItem
+        const { id: _id, rating: _rating, ...updateData } = formData;
         await updateMenuItem({
           _id: editingId,
           storageId,
-          ...formData,
+          ...updateData,
         });
       } else {
         await addMenuItem({
@@ -311,6 +313,40 @@ export default function CustomizeMenuPage() {
               </div>
               <p className="text-xs text-text-muted line-clamp-2 mb-3">{item.description}</p>
               
+              {/* Quick toggles */}
+              <div className="flex flex-wrap gap-1.5 mb-3">
+                <button
+                  onClick={(e) => { e.stopPropagation(); updateMenuItem({ _id: item._id, isOutOfStock: !item.isOutOfStock }); }}
+                  className={`px-2 py-1 rounded-md text-[10px] font-bold transition-colors cursor-pointer border ${
+                    item.isOutOfStock
+                      ? "bg-red-50 text-red-600 border-red-200"
+                      : "bg-gray-50 text-gray-400 border-gray-200 hover:border-red-200 hover:text-red-500"
+                  }`}
+                >
+                  {item.isOutOfStock ? "✕ Out of Stock" : "In Stock"}
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); updateMenuItem({ _id: item._id, isBestSeller: !item.isBestSeller }); }}
+                  className={`px-2 py-1 rounded-md text-[10px] font-bold transition-colors cursor-pointer border ${
+                    item.isBestSeller
+                      ? "bg-yellow-50 text-yellow-700 border-yellow-200"
+                      : "bg-gray-50 text-gray-400 border-gray-200 hover:border-yellow-200 hover:text-yellow-600"
+                  }`}
+                >
+                  ★ Best Seller
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); updateMenuItem({ _id: item._id, isFeatured: !item.isFeatured }); }}
+                  className={`px-2 py-1 rounded-md text-[10px] font-bold transition-colors cursor-pointer border ${
+                    item.isFeatured
+                      ? "bg-orange-50 text-orange-600 border-orange-200"
+                      : "bg-gray-50 text-gray-400 border-gray-200 hover:border-orange-200 hover:text-orange-500"
+                  }`}
+                >
+                  ◆ Featured
+                </button>
+              </div>
+
               <div className="mt-auto flex gap-2">
                 <button
                   onClick={() => handleEdit(item)}

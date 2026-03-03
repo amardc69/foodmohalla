@@ -27,36 +27,66 @@ const statusColors: Record<string, { bg: string; text: string; ring: string }> =
 
 const statusFlow = ["Pending", "Preparing", "Out for Delivery", "Delivered"];
 
-/* ─── Sound helpers (Web Audio API) ───────────────────────────────────────── */
+const STATUS_RANK: Record<string, number> = {
+  Pending: 0,
+  Preparing: 1,
+  "Out for Delivery": 2,
+  Delivered: 3,
+};
+
+function getForwardStatuses(currentStatus: string): string[] {
+  const currentRank = STATUS_RANK[currentStatus] ?? -1;
+  return statusFlow.filter((s) => (STATUS_RANK[s] ?? -1) > currentRank);
+}
+
+/* ─── Sound helpers (Web Audio API) — LOUD ────────────────────────────────── */
 function playTing() {
   try {
     const ctx = new AudioContext();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.frequency.value = 1200;
-    osc.type = "sine";
-    gain.gain.setValueAtTime(0.5, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
-    osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + 0.5);
+    // Play 3 rapid pings layered for maximum volume
+    [1200, 1500, 1800].forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.frequency.value = freq;
+      osc.type = "sine";
+      const t = ctx.currentTime + i * 0.12;
+      gain.gain.setValueAtTime(1.0, t);
+      gain.gain.exponentialRampToValueAtTime(0.01, t + 0.6);
+      osc.start(t);
+      osc.stop(t + 0.6);
+    });
   } catch { /* ignore */ }
 }
 
 function playDong() {
   try {
     const ctx = new AudioContext();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.frequency.value = 440;
-    osc.type = "sine";
-    gain.gain.setValueAtTime(0.6, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
-    osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + 0.8);
+    // Deep bell — two layered frequencies
+    [440, 550].forEach((freq) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.frequency.value = freq;
+      osc.type = "sine";
+      gain.gain.setValueAtTime(1.0, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 1.2);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 1.2);
+    });
+    // Add a harmonic layer
+    const osc2 = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+    osc2.connect(gain2);
+    gain2.connect(ctx.destination);
+    osc2.frequency.value = 220;
+    osc2.type = "triangle";
+    gain2.gain.setValueAtTime(0.8, ctx.currentTime);
+    gain2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 1.5);
+    osc2.start(ctx.currentTime);
+    osc2.stop(ctx.currentTime + 1.5);
   } catch { /* ignore */ }
 }
 
@@ -105,6 +135,25 @@ function getMapsLink(order: any): string | null {
     return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(order.deliveryAddress)}`;
   }
   return null;
+}
+
+/* ─── WhatsApp share helper ───────────────────────────────────────────────── */
+function shareOnWhatsApp(order: any) {
+  const mapsLink = getMapsLink(order);
+  const items = order.items.map((i: any) => `• ${i.quantity}x ${i.name}`).join("\n");
+  const text = [
+    `🛵 *Order ${order.displayId}*`,
+    `👤 *Customer:* ${order.customer.name}${order.customerUsername ? ` (@${order.customerUsername})` : ""}`,
+    ``,
+    `📦 *Items:*`,
+    items,
+    ``,
+    `💰 *Total:* ${order.displayPrice}`,
+    `📌 *Status:* ${order.status}`,
+    order.deliveryAddress ? `\n📍 *Address:* ${order.deliveryFlat ? order.deliveryFlat + ", " : ""}${order.deliveryAddress}${order.deliveryLandmark ? " (Landmark: " + order.deliveryLandmark + ")" : ""}` : "",
+    mapsLink ? `\n🗺️ *Directions:* ${mapsLink}` : "",
+  ].filter(Boolean).join("\n");
+  window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
 }
 
 /* ─── Component ───────────────────────────────────────────────────────────── */
@@ -163,11 +212,20 @@ export default function AdminDashboard() {
 
   const handleAcceptNewOrder = useCallback(async () => {
     if (!currentNewOrder) return;
-    await acceptOrderMutation({ orderId: currentNewOrder._id as Id<"orders"> });
-    setNewOrderQueue((prev) => prev.slice(1));
-    setShowRejectForm(false);
-    setRejectReason("");
-    if (newOrderQueue.length <= 1) setShowNewOrderDialog(false);
+    // Validate address before accepting
+    if (!currentNewOrder.deliveryAddress || currentNewOrder.deliveryAddress.trim() === "") {
+      alert("Cannot accept order — no delivery address provided by customer.");
+      return;
+    }
+    try {
+      await acceptOrderMutation({ orderId: currentNewOrder._id as Id<"orders"> });
+      setNewOrderQueue((prev) => prev.slice(1));
+      setShowRejectForm(false);
+      setRejectReason("");
+      if (newOrderQueue.length <= 1) setShowNewOrderDialog(false);
+    } catch (err: any) {
+      alert(err.message || "Failed to accept order");
+    }
   }, [currentNewOrder, acceptOrderMutation, newOrderQueue.length]);
 
   const handleRejectNewOrder = useCallback(async () => {
@@ -295,7 +353,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Orders Table */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col">
         <div className="px-6 py-5 border-b border-gray-200 flex items-center justify-between">
           <h3 className="text-lg font-bold text-text-main">
             Orders {statusFilter !== "All" ? `— ${statusFilter}` : ""}
@@ -347,49 +405,72 @@ export default function AdminDashboard() {
                       <p className="text-sm text-text-muted max-w-[200px] truncate">{order.itemsSummary}</p>
                     </td>
                     <td className="px-6 py-4 relative">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setShowStatusMenu(showStatusMenu === order._id ? null : order._id);
-                        }}
-                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold ring-1 ${sc.bg} ${sc.text} ${sc.ring} hover:shadow-sm transition-all cursor-pointer`}
-                      >
-                        {order.status}
-                        <span className="material-symbols-outlined text-[14px]">expand_more</span>
-                      </button>
-                      {showStatusMenu === order._id && (
-                        <div className="absolute z-30 top-full mt-1 left-4 bg-white rounded-lg shadow-xl border border-gray-200 py-1 min-w-[180px]" onClick={(e) => e.stopPropagation()}>
-                          {statusFlow.map((s) => (
+                      {(() => {
+                        const forwardOptions = getForwardStatuses(order.status);
+                        const canChange = forwardOptions.length > 0 || order.status !== "Delivered";
+                        return (
+                          <>
                             <button
-                              key={s}
-                              onClick={() => handleStatusChange(order._id, s)}
-                              className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors flex items-center gap-2 ${order.status === s ? "font-bold text-primary" : "text-gray-700"}`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (canChange) setShowStatusMenu(showStatusMenu === order._id ? null : order._id);
+                              }}
+                              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold ring-1 ${sc.bg} ${sc.text} ${sc.ring} hover:shadow-sm transition-all ${canChange ? "cursor-pointer" : "cursor-default opacity-80"}`}
                             >
-                              <span className={`w-2 h-2 rounded-full ${statusColors[s]?.bg} border ${order.status === s ? "border-primary" : "border-gray-300"}`}></span>
-                              {s}
-                              {order.status === s && <span className="material-symbols-outlined text-primary text-[16px] ml-auto">check</span>}
+                              {order.status}
+                              {canChange && <span className="material-symbols-outlined text-[14px]">expand_more</span>}
                             </button>
-                          ))}
-                          <hr className="my-1" />
-                          <button
-                            onClick={() => handleStatusChange(order._id, "Rejected")}
-                            className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2"
-                          >
-                            <span className="w-2 h-2 rounded-full bg-red-100 border border-red-300"></span>
-                            Rejected
-                          </button>
-                        </div>
-                      )}
+                            {showStatusMenu === order._id && (
+                              <div className="fixed z-50 bg-white rounded-lg shadow-xl border border-gray-200 py-1 min-w-[180px]" style={{ position: "absolute", top: "100%", left: 16, marginTop: 4 }} onClick={(e) => e.stopPropagation()}>
+                                {forwardOptions.map((s) => (
+                                  <button
+                                    key={s}
+                                    onClick={() => handleStatusChange(order._id, s)}
+                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors flex items-center gap-2 text-gray-700"
+                                  >
+                                    <span className={`w-2 h-2 rounded-full ${statusColors[s]?.bg} border border-gray-300`}></span>
+                                    {s}
+                                  </button>
+                                ))}
+                                {order.status !== "Rejected" && order.status !== "Delivered" && (
+                                  <>
+                                    <hr className="my-1" />
+                                    <button
+                                      onClick={() => handleStatusChange(order._id, "Rejected")}
+                                      className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2"
+                                    >
+                                      <span className="w-2 h-2 rounded-full bg-red-100 border border-red-300"></span>
+                                      Rejected
+                                    </button>
+                                  </>
+                                )}
+                                {forwardOptions.length === 0 && order.status !== "Rejected" && order.status !== "Delivered" && (
+                                  <p className="px-4 py-2 text-xs text-gray-400">No further status available</p>
+                                )}
+                              </div>
+                            )}
+                          </>
+                        );
+                      })()}
                     </td>
                     <td className="px-6 py-4 font-medium text-text-main">{order.displayPrice}</td>
                     <td className="px-6 py-4 text-center" onClick={(e) => e.stopPropagation()}>
-                      <button
-                        onClick={() => printOrder(order)}
-                        className="p-2 rounded-lg text-gray-400 hover:text-primary hover:bg-primary/5 transition-all"
-                        title="Print Order"
-                      >
-                        <span className="material-symbols-outlined text-[20px]">print</span>
-                      </button>
+                      <div className="flex items-center justify-center gap-1">
+                        <button
+                          onClick={() => shareOnWhatsApp(order)}
+                          className="p-2 rounded-lg text-gray-400 hover:text-green-600 hover:bg-green-50 transition-all"
+                          title="Share on WhatsApp"
+                        >
+                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+                        </button>
+                        <button
+                          onClick={() => printOrder(order)}
+                          className="p-2 rounded-lg text-gray-400 hover:text-primary hover:bg-primary/5 transition-all"
+                          title="Print Order"
+                        >
+                          <span className="material-symbols-outlined text-[20px]">print</span>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );
@@ -512,6 +593,10 @@ export default function AdminDashboard() {
           )}
 
           <DialogFooter className="px-6 py-4 border-t bg-muted/30">
+            <Button variant="outline" size="sm" onClick={() => selectedOrder && shareOnWhatsApp(selectedOrder)} className="text-green-600 border-green-200 hover:bg-green-50">
+              <svg className="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+              WhatsApp
+            </Button>
             <Button variant="outline" size="sm" onClick={() => selectedOrder && printOrder(selectedOrder)}>
               <span className="material-symbols-outlined text-[16px] mr-1.5">print</span>
               Print

@@ -183,6 +183,13 @@ export const getOrderById = query({
   },
 });
 
+const STATUS_ORDER: Record<string, number> = {
+  Pending: 0,
+  Preparing: 1,
+  "Out for Delivery": 2,
+  Delivered: 3,
+};
+
 export const updateOrderStatus = mutation({
   args: {
     orderId: v.id("orders"),
@@ -193,6 +200,22 @@ export const updateOrderStatus = mutation({
     if (!order) {
       throw new Error(`Order ${args.orderId} not found`);
     }
+
+    // Reject is always allowed
+    if (args.status === "Rejected") {
+      await ctx.db.patch(args.orderId, { status: args.status });
+      return;
+    }
+
+    // Enforce forward-only status transitions
+    const currentRank = STATUS_ORDER[order.status] ?? -1;
+    const newRank = STATUS_ORDER[args.status] ?? -1;
+    if (newRank <= currentRank) {
+      throw new Error(
+        `Cannot move status backward from '${order.status}' to '${args.status}'`
+      );
+    }
+
     await ctx.db.patch(args.orderId, { status: args.status });
   },
 });
@@ -203,6 +226,12 @@ export const acceptOrder = mutation({
     const order = await ctx.db.get(args.orderId);
     if (!order) throw new Error("Order not found");
     if (order.status !== "Pending") throw new Error("Order is not pending");
+
+    // Require delivery address (landmark is optional)
+    if (!order.deliveryAddress || order.deliveryAddress.trim() === "") {
+      throw new Error("Cannot accept order without a delivery address");
+    }
+
     await ctx.db.patch(args.orderId, { status: "Preparing" });
   },
 });
