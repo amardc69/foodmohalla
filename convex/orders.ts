@@ -51,14 +51,41 @@ export const getOrders = query({
       allOrders = await ctx.db.query("orders").order("desc").collect();
     }
 
-    // Enrich orders with computed display fields
-    const enriched = allOrders.map((o) => ({
-      ...o,
-      displayId: formatOrderId(o._id),
-      timeAgo: formatTimeAgo(o._creationTime),
-      itemsSummary: formatItemsSummary(o.items),
-      displayPrice: `₹${o.totalPrice.toFixed(2)}`,
-    }));
+    // Enrich orders with computed display fields + resolve real user names
+    const enriched = await Promise.all(
+      allOrders.map(async (o) => {
+        let resolvedName = o.customer.name;
+        let resolvedUsername = "";
+        let resolvedAvatar = o.customer.avatar;
+
+        if (o.userId) {
+          try {
+            const user = await ctx.db.get(o.userId as any);
+            if (user && "name" in user) {
+              resolvedName = (user as any).name;
+              resolvedUsername = (user as any).username || "";
+              resolvedAvatar =
+                (user as any).avatar || resolvedAvatar;
+            }
+          } catch {
+            // fallback to stored customer info
+          }
+        }
+
+        return {
+          ...o,
+          customer: {
+            name: resolvedName,
+            avatar: resolvedAvatar,
+          },
+          customerUsername: resolvedUsername,
+          displayId: formatOrderId(o._id),
+          timeAgo: formatTimeAgo(o._creationTime),
+          itemsSummary: formatItemsSummary(o.items),
+          displayPrice: `₹${o.totalPrice.toFixed(2)}`,
+        };
+      })
+    );
 
     // Stats calculation — "today" based on UTC day
     const todayStart = new Date();
@@ -92,7 +119,8 @@ export const getOrders = query({
       filtered = filtered.filter(
         (o) =>
           o.displayId.toLowerCase().includes(lower) ||
-          o.customer.name.toLowerCase().includes(lower)
+          o.customer.name.toLowerCase().includes(lower) ||
+          o.customerUsername.toLowerCase().includes(lower)
       );
     }
 
@@ -109,8 +137,29 @@ export const getOrderById = query({
   handler: async (ctx, args) => {
     const order = await ctx.db.get(args.orderId);
     if (!order) return null;
+
+    let resolvedName = order.customer.name;
+    let resolvedUsername = "";
+    let resolvedAvatar = order.customer.avatar;
+
+    if (order.userId) {
+      try {
+        const user = await ctx.db.get(order.userId as any);
+        if (user && "name" in user) {
+          resolvedName = (user as any).name;
+          resolvedUsername = (user as any).username || "";
+          resolvedAvatar = (user as any).avatar || resolvedAvatar;
+        }
+      } catch { /* fallback */ }
+    }
+
     return {
       ...order,
+      customer: {
+        name: resolvedName,
+        avatar: resolvedAvatar,
+      },
+      customerUsername: resolvedUsername,
       displayId: formatOrderId(order._id),
       timeAgo: formatTimeAgo(order._creationTime),
       itemsSummary: formatItemsSummary(order.items),

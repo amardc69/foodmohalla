@@ -4,6 +4,15 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 /* ─── Status configuration ────────────────────────────────────────────────── */
 const STATUS_LIST = ["All", "Pending", "Preparing", "Out for Delivery", "Delivered", "Rejected"] as const;
@@ -58,7 +67,7 @@ function printOrder(order: any) {
   w.document.write(`
     <html><head><title>Order ${order.displayId}</title>
     <style>
-      body{font-family:sans-serif;padding:24px;max-width:380px;margin:auto}
+      body{font-family:system-ui,sans-serif;padding:24px;max-width:380px;margin:auto}
       h1{font-size:20px;margin:0 0 4px}
       .meta{color:#888;font-size:12px;margin-bottom:16px}
       table{width:100%;border-collapse:collapse;margin:12px 0}
@@ -70,7 +79,7 @@ function printOrder(order: any) {
     </style></head><body>
     <h1>Food Mohalla</h1>
     <p class="meta">Order ${order.displayId} • ${order.timeAgo}</p>
-    <p><strong>Customer:</strong> ${order.customer.name}</p>
+    <p><strong>Customer:</strong> ${order.customer.name}${order.customerUsername ? ` (@${order.customerUsername})` : ""}</p>
     <p><strong>Status:</strong> ${order.status}</p>
     <p><strong>Payment:</strong> ${order.paymentMethod || "N/A"}</p>
     ${order.deliveryAddress ? `<div class="addr"><strong>Address:</strong><br>${order.deliveryFlat ? order.deliveryFlat + ", " : ""}${order.deliveryAddress}${order.deliveryLandmark ? "<br>Landmark: " + order.deliveryLandmark : ""}</div>` : ""}
@@ -142,12 +151,8 @@ export default function AdminDashboard() {
     if (newOrders.length > 0) {
       setNewOrderQueue((prev) => [...prev, ...newOrders]);
       setShowNewOrderDialog(true);
-      // Play sound
-      if (notifSound === "dong") {
-        playDong();
-      } else {
-        playTing();
-      }
+      if (notifSound === "dong") playDong();
+      else playTing();
     }
 
     knownOrderIds.current = currentIds;
@@ -161,9 +166,7 @@ export default function AdminDashboard() {
     setNewOrderQueue((prev) => prev.slice(1));
     setShowRejectForm(false);
     setRejectReason("");
-    if (newOrderQueue.length <= 1) {
-      setShowNewOrderDialog(false);
-    }
+    if (newOrderQueue.length <= 1) setShowNewOrderDialog(false);
   }, [currentNewOrder, acceptOrderMutation, newOrderQueue.length]);
 
   const handleRejectNewOrder = useCallback(async () => {
@@ -175,9 +178,7 @@ export default function AdminDashboard() {
     setNewOrderQueue((prev) => prev.slice(1));
     setShowRejectForm(false);
     setRejectReason("");
-    if (newOrderQueue.length <= 1) {
-      setShowNewOrderDialog(false);
-    }
+    if (newOrderQueue.length <= 1) setShowNewOrderDialog(false);
   }, [currentNewOrder, rejectReason, rejectOrderMutation, newOrderQueue.length]);
 
   const handleSkipToNext = useCallback(() => {
@@ -190,7 +191,6 @@ export default function AdminDashboard() {
     async (orderId: string, newStatus: string) => {
       await updateStatus({ orderId: orderId as Id<"orders">, status: newStatus });
       setShowStatusMenu(null);
-      // Refresh selected order if open
       if (selectedOrder && selectedOrder._id === orderId) {
         setSelectedOrder((prev: any) => prev ? { ...prev, status: newStatus } : prev);
       }
@@ -228,7 +228,7 @@ export default function AdminDashboard() {
             </span>
             <input
               className="pl-10 pr-4 py-2 border-none ring-1 ring-gray-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-primary outline-none shadow-sm"
-              placeholder="Search orders..."
+              placeholder="Search by name, username, order..."
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -240,29 +240,11 @@ export default function AdminDashboard() {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {[
-          {
-            icon: "attach_money",
-            label: "Total Revenue (Delivered)",
-            value: stats.totalRevenue,
-            gradient: "from-emerald-500 to-green-600",
-          },
-          {
-            icon: "pending_actions",
-            label: "Pending Orders",
-            value: String(stats.pendingOrders),
-            gradient: "from-amber-500 to-orange-600",
-          },
-          {
-            icon: "check_circle",
-            label: "Delivered Today",
-            value: String(stats.deliveredToday),
-            gradient: "from-blue-500 to-indigo-600",
-          },
+          { icon: "attach_money", label: "Total Revenue (Delivered)", value: stats.totalRevenue, gradient: "from-emerald-500 to-green-600" },
+          { icon: "pending_actions", label: "Pending Orders", value: String(stats.pendingOrders), gradient: "from-amber-500 to-orange-600" },
+          { icon: "check_circle", label: "Delivered Today", value: String(stats.deliveredToday), gradient: "from-blue-500 to-indigo-600" },
         ].map((stat) => (
-          <div
-            key={stat.label}
-            className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
-          >
+          <div key={stat.label} className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between mb-4">
               <div className={`p-2.5 bg-gradient-to-br ${stat.gradient} rounded-lg text-white shadow-sm`}>
                 <span className="material-symbols-outlined">{stat.icon}</span>
@@ -287,11 +269,6 @@ export default function AdminDashboard() {
             }`}
           >
             {s}
-            {s !== "All" && (
-              <span className="ml-1.5 text-xs opacity-80">
-                ({orders.filter((o: any) => s === statusFilter ? true : o.status === s).length})
-              </span>
-            )}
           </button>
         ))}
       </div>
@@ -335,10 +312,13 @@ export default function AdminDashboard() {
                           style={{ backgroundImage: `url('${order.customer.avatar}')` }}
                         ></div>
                         <div>
-                          <p className="text-sm font-medium text-text-main">
-                            {order.customer.name}
-                          </p>
-                          <p className="text-xs text-text-muted">{order.timeAgo}</p>
+                          <p className="text-sm font-medium text-text-main">{order.customer.name}</p>
+                          {order.customerUsername && (
+                            <p className="text-xs text-text-muted">@{order.customerUsername}</p>
+                          )}
+                          {!order.customerUsername && (
+                            <p className="text-xs text-text-muted">{order.timeAgo}</p>
+                          )}
                         </div>
                       </div>
                     </td>
@@ -356,24 +336,17 @@ export default function AdminDashboard() {
                         {order.status}
                         <span className="material-symbols-outlined text-[14px]">expand_more</span>
                       </button>
-                      {/* Status dropdown */}
                       {showStatusMenu === order._id && (
-                        <div className="absolute z-30 top-full mt-1 left-4 bg-white rounded-lg shadow-xl border border-gray-200 py-1 min-w-[180px]"
-                          onClick={(e) => e.stopPropagation()}
-                        >
+                        <div className="absolute z-30 top-full mt-1 left-4 bg-white rounded-lg shadow-xl border border-gray-200 py-1 min-w-[180px]" onClick={(e) => e.stopPropagation()}>
                           {statusFlow.map((s) => (
                             <button
                               key={s}
                               onClick={() => handleStatusChange(order._id, s)}
-                              className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors flex items-center gap-2 ${
-                                order.status === s ? "font-bold text-primary" : "text-gray-700"
-                              }`}
+                              className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors flex items-center gap-2 ${order.status === s ? "font-bold text-primary" : "text-gray-700"}`}
                             >
-                              <span className={`w-2 h-2 rounded-full ${statusColors[s]?.bg?.replace("bg-", "bg-")} border ${order.status === s ? "border-primary" : "border-gray-300"}`}></span>
+                              <span className={`w-2 h-2 rounded-full ${statusColors[s]?.bg} border ${order.status === s ? "border-primary" : "border-gray-300"}`}></span>
                               {s}
-                              {order.status === s && (
-                                <span className="material-symbols-outlined text-primary text-[16px] ml-auto">check</span>
-                              )}
+                              {order.status === s && <span className="material-symbols-outlined text-primary text-[16px] ml-auto">check</span>}
                             </button>
                           ))}
                           <hr className="my-1" />
@@ -387,9 +360,7 @@ export default function AdminDashboard() {
                         </div>
                       )}
                     </td>
-                    <td className="px-6 py-4 font-medium text-text-main">
-                      {order.displayPrice}
-                    </td>
+                    <td className="px-6 py-4 font-medium text-text-main">{order.displayPrice}</td>
                     <td className="px-6 py-4 text-center" onClick={(e) => e.stopPropagation()}>
                       <button
                         onClick={() => printOrder(order)}
@@ -415,97 +386,93 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Order Detail Dialog */}
-      {selectedOrder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={() => setSelectedOrder(null)}>
-          <div
-            className="bg-white rounded-2xl shadow-2xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto animate-in"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Dialog Header */}
-            <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between bg-gray-50/50 rounded-t-2xl">
+      {/* ─── ORDER DETAIL DIALOG (shadcn) ─────────────────────────────────── */}
+      <Dialog open={!!selectedOrder} onOpenChange={(open) => { if (!open) setSelectedOrder(null); }}>
+        <DialogContent className="sm:max-w-[520px] max-h-[85vh] overflow-y-auto gap-0 p-0">
+          <DialogHeader className="px-6 pt-6 pb-4 border-b">
+            <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-bold text-text-main">{selectedOrder.displayId}</h3>
-                <p className="text-sm text-text-muted">{selectedOrder.timeAgo}</p>
+                <DialogTitle className="text-lg">{selectedOrder?.displayId}</DialogTitle>
+                <DialogDescription>{selectedOrder?.timeAgo}</DialogDescription>
               </div>
-              <button
-                onClick={() => setSelectedOrder(null)}
-                className="p-2 rounded-lg hover:bg-gray-200 transition-colors text-gray-500"
-              >
-                <span className="material-symbols-outlined">close</span>
-              </button>
+              {selectedOrder && (
+                <span className={`px-3 py-1 rounded-full text-xs font-bold ${statusColors[selectedOrder.status]?.bg} ${statusColors[selectedOrder.status]?.text}`}>
+                  {selectedOrder.status}
+                </span>
+              )}
             </div>
+          </DialogHeader>
 
-            <div className="p-6 space-y-5">
+          {selectedOrder && (
+            <div className="px-6 py-5 space-y-5">
               {/* Customer */}
               <div className="flex items-center gap-3">
                 <div
-                  className="w-10 h-10 rounded-full bg-gray-200 bg-cover bg-center"
+                  className="w-10 h-10 rounded-full bg-gray-200 bg-cover bg-center flex-shrink-0"
                   style={{ backgroundImage: `url('${selectedOrder.customer.avatar}')` }}
                 ></div>
                 <div>
-                  <p className="font-semibold text-text-main">{selectedOrder.customer.name}</p>
-                  <p className="text-xs text-text-muted">Customer</p>
+                  <p className="font-semibold text-sm">{selectedOrder.customer.name}</p>
+                  {selectedOrder.customerUsername && (
+                    <p className="text-xs text-muted-foreground">@{selectedOrder.customerUsername}</p>
+                  )}
                 </div>
-                <span className={`ml-auto px-3 py-1 rounded-full text-xs font-bold ${statusColors[selectedOrder.status]?.bg} ${statusColors[selectedOrder.status]?.text}`}>
-                  {selectedOrder.status}
-                </span>
               </div>
 
               {/* Items */}
               <div>
-                <h4 className="text-sm font-bold text-text-muted uppercase tracking-wider mb-3">Order Items</h4>
-                <div className="space-y-2">
+                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Order Items</h4>
+                <div className="space-y-1.5">
                   {selectedOrder.items.map((item: any, idx: number) => (
-                    <div key={idx} className="flex items-center justify-between text-sm bg-gray-50 rounded-lg px-3 py-2">
+                    <div key={idx} className="flex items-center justify-between text-sm bg-muted/50 rounded-md px-3 py-2">
                       <div className="flex items-center gap-2">
                         <span className="w-6 h-6 rounded bg-primary/10 text-primary flex items-center justify-center font-bold text-xs">{item.quantity}x</span>
                         <span className="font-medium">{item.name}</span>
                       </div>
-                      <span className="text-text-muted">₹{(item.price * item.quantity).toFixed(2)}</span>
+                      <span className="text-muted-foreground">₹{(item.price * item.quantity).toFixed(2)}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Price details */}
-              <div className="bg-gray-50 rounded-lg p-4 space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-text-muted">Payment Method</span>
+              {/* Price */}
+              <div className="bg-muted/50 rounded-lg p-4 space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Payment Method</span>
                   <span className="font-medium capitalize">{selectedOrder.paymentMethod || "N/A"}</span>
                 </div>
                 {selectedOrder.appliedCoupon && (
-                  <div className="flex justify-between text-sm text-green-600">
+                  <div className="flex justify-between text-green-600">
                     <span>Coupon ({selectedOrder.appliedCoupon})</span>
                     <span>−₹{(selectedOrder.discountAmount || 0).toFixed(2)}</span>
                   </div>
                 )}
-                <div className="flex justify-between font-bold text-base border-t border-gray-200 pt-2 mt-2">
+                <div className="flex justify-between font-bold text-base border-t pt-2 mt-1">
                   <span>Total</span>
                   <span className="text-primary">{selectedOrder.displayPrice}</span>
                 </div>
               </div>
 
-              {/* Delivery Address */}
+              {/* Address */}
               {selectedOrder.deliveryAddress && (
                 <div>
-                  <h4 className="text-sm font-bold text-text-muted uppercase tracking-wider mb-2">Delivery Address</h4>
-                  <div className="bg-blue-50 border border-blue-100 rounded-lg p-4">
-                    <p className="text-sm text-blue-900 leading-relaxed">
+                  <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Delivery Address</h4>
+                  <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 dark:bg-blue-950/20 dark:border-blue-900">
+                    <p className="text-sm text-blue-900 dark:text-blue-100 leading-relaxed">
                       {selectedOrder.deliveryFlat ? `${selectedOrder.deliveryFlat}, ` : ""}
                       {selectedOrder.deliveryAddress}
                     </p>
                     {selectedOrder.deliveryLandmark && (
-                      <p className="text-xs text-blue-700 mt-1">Landmark: {selectedOrder.deliveryLandmark}</p>
+                      <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">Landmark: {selectedOrder.deliveryLandmark}</p>
                     )}
                     {getMapsLink(selectedOrder) && (
                       <a
                         href={getMapsLink(selectedOrder)!}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 bg-white hover:bg-blue-50 px-3 py-1.5 rounded-lg transition-colors font-medium border border-blue-200 mt-3"
+                        className="inline-flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-800 bg-white hover:bg-blue-50 px-3 py-1.5 rounded-md transition-colors font-medium border border-blue-200 mt-2.5"
                       >
-                        <span className="material-symbols-outlined text-[16px]">directions</span>
+                        <span className="material-symbols-outlined text-[14px]">directions</span>
                         View on Google Maps
                       </a>
                     )}
@@ -515,83 +482,77 @@ export default function AdminDashboard() {
 
               {/* Rejection reason */}
               {selectedOrder.status === "Rejected" && selectedOrder.rejectionReason && (
-                <div className="bg-red-50 border border-red-100 rounded-lg p-4">
-                  <h4 className="text-sm font-bold text-red-800 mb-1">Rejection Reason</h4>
-                  <p className="text-sm text-red-700">{selectedOrder.rejectionReason}</p>
+                <div className="bg-red-50 border border-red-100 rounded-lg p-3 dark:bg-red-950/20 dark:border-red-900">
+                  <h4 className="text-xs font-semibold text-red-800 dark:text-red-300 mb-1">Rejection Reason</h4>
+                  <p className="text-sm text-red-700 dark:text-red-200">{selectedOrder.rejectionReason}</p>
                 </div>
               )}
+            </div>
+          )}
 
-              {/* Action buttons */}
-              <div className="flex gap-3 pt-2">
-                <button
-                  onClick={() => printOrder(selectedOrder)}
-                  className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg border border-gray-200 text-text-muted hover:bg-gray-50 transition-colors font-medium text-sm"
-                >
-                  <span className="material-symbols-outlined text-[18px]">print</span>
-                  Print Order
-                </button>
-                <button
-                  onClick={() => setSelectedOrder(null)}
-                  className="flex-1 bg-primary hover:bg-primary-dark text-white font-bold py-2.5 rounded-lg transition-colors text-sm shadow-sm shadow-primary/20"
-                >
-                  Close
-                </button>
+          <DialogFooter className="px-6 py-4 border-t bg-muted/30">
+            <Button variant="outline" size="sm" onClick={() => selectedOrder && printOrder(selectedOrder)}>
+              <span className="material-symbols-outlined text-[16px] mr-1.5">print</span>
+              Print
+            </Button>
+            <Button size="sm" onClick={() => setSelectedOrder(null)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ─── NEW ORDER NOTIFICATION DIALOG (shadcn) ───────────────────────── */}
+      <Dialog open={showNewOrderDialog && !!currentNewOrder} onOpenChange={(open) => { if (!open) { setShowNewOrderDialog(false); setShowRejectForm(false); setRejectReason(""); } }}>
+        <DialogContent className="sm:max-w-[440px] gap-0 p-0" showCloseButton={false}>
+          {/* Custom gradient header */}
+          <div className="bg-gradient-to-r from-amber-500 to-orange-500 px-6 py-4 rounded-t-lg flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <span className="material-symbols-outlined text-white text-2xl">notifications_active</span>
+                <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-ping"></span>
+                <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
+              </div>
+              <div>
+                <h3 className="font-bold text-white text-lg leading-tight">New Order!</h3>
+                <p className="text-amber-100 text-xs">{currentNewOrder?.displayId} • {currentNewOrder?.timeAgo}</p>
               </div>
             </div>
+            {newOrderQueue.length > 1 && (
+              <span className="bg-white/20 text-white px-3 py-1 rounded-full text-xs font-bold">
+                {newOrderQueue.length} pending
+              </span>
+            )}
           </div>
-        </div>
-      )}
 
-      {/* New Order Notification Dialog */}
-      {showNewOrderDialog && currentNewOrder && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden animate-in">
-            {/* Header with pulse */}
-            <div className="bg-gradient-to-r from-amber-500 to-orange-500 px-6 py-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="relative">
-                  <span className="material-symbols-outlined text-white text-2xl">notifications_active</span>
-                  <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-ping"></span>
-                  <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
-                </div>
-                <div>
-                  <h3 className="font-bold text-white text-lg">New Order!</h3>
-                  <p className="text-amber-100 text-xs">{currentNewOrder.displayId} • {currentNewOrder.timeAgo}</p>
-                </div>
-              </div>
-              {newOrderQueue.length > 1 && (
-                <span className="bg-white/20 text-white px-3 py-1 rounded-full text-xs font-bold">
-                  {newOrderQueue.length} pending
-                </span>
-              )}
-            </div>
-
+          {currentNewOrder && (
             <div className="p-6 space-y-4">
               {/* Customer */}
               <div className="flex items-center gap-3">
                 <div
-                  className="w-10 h-10 rounded-full bg-gray-200 bg-cover bg-center"
+                  className="w-10 h-10 rounded-full bg-gray-200 bg-cover bg-center flex-shrink-0"
                   style={{ backgroundImage: `url('${currentNewOrder.customer.avatar}')` }}
                 ></div>
                 <div>
-                  <p className="font-semibold text-text-main">{currentNewOrder.customer.name}</p>
-                  <p className="text-xs text-text-muted">Customer</p>
+                  <p className="font-semibold text-sm">{currentNewOrder.customer.name}</p>
+                  {currentNewOrder.customerUsername && (
+                    <p className="text-xs text-muted-foreground">@{currentNewOrder.customerUsername}</p>
+                  )}
                 </div>
               </div>
 
               {/* Items */}
-              <div className="bg-gray-50 rounded-lg p-3 space-y-1.5">
+              <div className="bg-muted/50 rounded-lg p-3 space-y-1.5 text-sm">
                 {currentNewOrder.items.map((item: any, idx: number) => (
-                  <div key={idx} className="flex items-center justify-between text-sm">
+                  <div key={idx} className="flex items-center justify-between">
                     <span className="flex items-center gap-2">
                       <span className="w-5 h-5 rounded bg-primary/10 text-primary flex items-center justify-center font-bold text-[10px]">{item.quantity}x</span>
                       <span className="font-medium">{item.name}</span>
                     </span>
-                    <span className="text-text-muted">₹{(item.price * item.quantity).toFixed(2)}</span>
+                    <span className="text-muted-foreground">₹{(item.price * item.quantity).toFixed(2)}</span>
                   </div>
                 ))}
-                <hr className="my-2" />
-                <div className="flex justify-between font-bold">
+                <div className="border-t pt-2 mt-1 flex justify-between font-bold">
                   <span>Total</span>
                   <span className="text-primary">{currentNewOrder.displayPrice}</span>
                 </div>
@@ -599,19 +560,14 @@ export default function AdminDashboard() {
 
               {/* Address */}
               {currentNewOrder.deliveryAddress && (
-                <div className="bg-blue-50 rounded-lg p-3 text-sm">
-                  <p className="text-blue-900">
+                <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 text-sm">
+                  <p className="text-blue-900 leading-relaxed">
                     <span className="material-symbols-outlined text-[14px] align-middle mr-1">location_on</span>
                     {currentNewOrder.deliveryFlat ? `${currentNewOrder.deliveryFlat}, ` : ""}
                     {currentNewOrder.deliveryAddress}
                   </p>
                   {getMapsLink(currentNewOrder) && (
-                    <a
-                      href={getMapsLink(currentNewOrder)!}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-blue-600 hover:text-blue-800 text-xs font-medium mt-1 inline-flex items-center gap-1"
-                    >
+                    <a href={getMapsLink(currentNewOrder)!} target="_blank" rel="noreferrer" className="text-blue-600 hover:text-blue-800 text-xs font-medium mt-1 inline-flex items-center gap-1">
                       <span className="material-symbols-outlined text-[12px]">directions</span>
                       Open in Maps
                     </a>
@@ -623,26 +579,20 @@ export default function AdminDashboard() {
               {showRejectForm && (
                 <div className="space-y-2">
                   <textarea
-                    className="w-full p-3 border border-red-200 rounded-lg text-sm bg-red-50 focus:ring-2 focus:ring-red-300 focus:border-red-300 outline-none resize-none"
+                    className="w-full p-3 border border-red-200 rounded-lg text-sm bg-red-50 focus:ring-2 focus:ring-red-400 outline-none resize-none"
                     rows={2}
                     placeholder="Reason for rejection..."
                     value={rejectReason}
                     onChange={(e) => setRejectReason(e.target.value)}
+                    autoFocus
                   />
                   <div className="flex gap-2">
-                    <button
-                      onClick={() => { setShowRejectForm(false); setRejectReason(""); }}
-                      className="flex-1 py-2 rounded-lg border border-gray-200 text-sm font-medium hover:bg-gray-50 transition-colors"
-                    >
+                    <Button variant="outline" size="sm" className="flex-1" onClick={() => { setShowRejectForm(false); setRejectReason(""); }}>
                       Cancel
-                    </button>
-                    <button
-                      onClick={handleRejectNewOrder}
-                      disabled={!rejectReason.trim()}
-                      className="flex-1 py-2 rounded-lg bg-red-500 text-white text-sm font-bold hover:bg-red-600 transition-colors disabled:opacity-50"
-                    >
+                    </Button>
+                    <Button variant="destructive" size="sm" className="flex-1" onClick={handleRejectNewOrder} disabled={!rejectReason.trim()}>
                       Confirm Reject
-                    </button>
+                    </Button>
                   </div>
                 </div>
               )}
@@ -650,60 +600,35 @@ export default function AdminDashboard() {
               {/* Action buttons */}
               {!showRejectForm && (
                 <div className="flex gap-3 pt-1">
-                  <button
-                    onClick={() => setShowRejectForm(true)}
-                    className="flex-1 py-2.5 rounded-lg border-2 border-red-200 text-red-600 font-bold text-sm hover:bg-red-50 transition-colors"
-                  >
+                  <Button variant="outline" className="flex-1 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700" onClick={() => setShowRejectForm(true)}>
                     Reject
-                  </button>
-                  <button
-                    onClick={handleAcceptNewOrder}
-                    className="flex-1 py-2.5 rounded-lg bg-green-500 text-white font-bold text-sm hover:bg-green-600 transition-colors shadow-sm shadow-green-500/30 flex items-center justify-center gap-1"
-                  >
-                    <span className="material-symbols-outlined text-[18px]">check</span>
+                  </Button>
+                  <Button className="flex-1 bg-green-600 hover:bg-green-700 text-white" onClick={handleAcceptNewOrder}>
+                    <span className="material-symbols-outlined text-[18px] mr-1">check</span>
                     Accept Order
-                  </button>
+                  </Button>
                 </div>
               )}
 
               {/* Next order button */}
               {newOrderQueue.length > 1 && !showRejectForm && (
-                <button
-                  onClick={handleSkipToNext}
-                  className="w-full py-2 rounded-lg border border-gray-200 text-sm font-medium text-text-muted hover:bg-gray-50 transition-colors flex items-center justify-center gap-1"
-                >
+                <Button variant="ghost" className="w-full" onClick={handleSkipToNext}>
                   Next Order
-                  <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
-                  <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full ml-1">
+                  <span className="material-symbols-outlined text-[16px] ml-1">arrow_forward</span>
+                  <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full ml-2">
                     +{newOrderQueue.length - 1} more
                   </span>
-                </button>
+                </Button>
               )}
             </div>
-          </div>
-        </div>
-      )}
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Click-away handler for status menu */}
       {showStatusMenu && (
         <div className="fixed inset-0 z-20" onClick={() => setShowStatusMenu(null)} />
       )}
-
-      <style jsx>{`
-        @keyframes animate-in {
-          from {
-            opacity: 0;
-            transform: scale(0.95) translateY(10px);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1) translateY(0);
-          }
-        }
-        .animate-in {
-          animation: animate-in 0.2s ease-out;
-        }
-      `}</style>
     </div>
   );
 }
