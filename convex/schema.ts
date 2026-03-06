@@ -19,6 +19,7 @@ export default defineSchema({
     isBestSeller: v.optional(v.boolean()),
     isFeatured: v.optional(v.boolean()),
     calories: v.optional(v.number()),
+    instructions: v.optional(v.array(v.string())),
   }).index("by_menu_item_id", ["id"]).index("by_category", ["category"]),
 
   categories: defineTable({

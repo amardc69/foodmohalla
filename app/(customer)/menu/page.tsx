@@ -449,7 +449,7 @@ function MenuContent() {
                     <div>
                       <h3 className="font-bold text-sm lg:text-base mb-3">Special Instructions</h3>
                       <div className="flex flex-wrap gap-2 mb-3">
-                        {defaultInstructions.map((inst) => (
+                        {[...defaultInstructions, ...(selectedItemForSheet?.instructions || [])].map((inst) => (
                           <label key={inst} className="cursor-pointer">
                             <input
                               className="peer sr-only"

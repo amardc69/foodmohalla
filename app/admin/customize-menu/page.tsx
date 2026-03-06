@@ -83,6 +83,7 @@ export default function CustomizeMenuPage() {
     isFeatured: false,
     calories: 0,
     addons: [] as { name: string; price: number }[],
+    instructions: [] as string[],
   });
 
   if (menuItems === undefined || categoriesDb === undefined) {
@@ -107,6 +108,7 @@ export default function CustomizeMenuPage() {
       isFeatured: item.isFeatured || false,
       calories: item.calories || 0,
       addons: item.addons || [],
+      instructions: item.instructions || [],
     });
     setEditingId(item._id);
     setSelectedFile(null);
@@ -131,6 +133,7 @@ export default function CustomizeMenuPage() {
       isFeatured: false,
       calories: 0,
       addons: [],
+      instructions: [],
     });
     setEditingId(null);
     setSelectedFile(null);
@@ -201,6 +204,26 @@ export default function CustomizeMenuPage() {
     setFormData((prev) => ({
       ...prev,
       addons: prev.addons.filter((_, i) => i !== index),
+    }));
+  };
+
+  const addInstruction = () => {
+    setFormData((prev) => ({
+      ...prev,
+      instructions: [...prev.instructions, ""],
+    }));
+  };
+
+  const updateInstruction = (index: number, value: string) => {
+    const newInstructions = [...formData.instructions];
+    newInstructions[index] = value;
+    setFormData({ ...formData, instructions: newInstructions });
+  };
+
+  const removeInstruction = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      instructions: prev.instructions.filter((_, i) => i !== index),
     }));
   };
 
@@ -695,6 +718,45 @@ export default function CustomizeMenuPage() {
                           onClick={() => removeAddon(index)}
                           className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                           title="Remove Addon"
+                        >
+                          <span className="material-symbols-outlined text-[20px]">close</span>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-sm font-bold text-text-main uppercase tracking-wider">Custom Instructions</h3>
+                  <button
+                    type="button"
+                    onClick={addInstruction}
+                    className="text-xs font-bold text-primary hover:text-orange-600 transition-colors bg-primary/10 px-3 py-1.5 rounded-full flex items-center gap-1"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">add</span> Instruction
+                  </button>
+                </div>
+                {formData.instructions.length === 0 ? (
+                  <p className="text-sm text-text-muted italic border-2 border-dashed border-gray-200 p-6 rounded-xl text-center">No custom instructions configured for this item.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {formData.instructions.map((inst, index) => (
+                      <div key={index} className="flex gap-3 items-center p-2 rounded-lg border border-gray-200 bg-white">
+                        <input
+                          type="text"
+                          placeholder="Instruction (e.g. Make it Crispy)"
+                          className="flex-1 p-2 border border-gray-200 rounded focus:ring-2 focus:ring-primary outline-none text-sm"
+                          value={inst}
+                          onChange={(e) => updateInstruction(index, e.target.value)}
+                          required
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeInstruction(index)}
+                          className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Remove Instruction"
                         >
                           <span className="material-symbols-outlined text-[20px]">close</span>
                         </button>

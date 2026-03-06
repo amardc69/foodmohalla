@@ -263,7 +263,7 @@ export default function ProductPage() {
                   Special Instructions
                 </h3>
                 <div className="flex flex-wrap gap-2">
-                  {instructions.map((inst) => (
+                  {[...instructions, ...(item.instructions || [])].map((inst) => (
                     <label key={inst} className="cursor-pointer">
                       <input
                         className="peer sr-only"

@@ -25,7 +25,7 @@ export default function HomePage() {
                 Delicious food delivered to your doorstep
               </h1>
               <h2 className="text-slate-200 text-lg font-medium leading-relaxed max-w-xl drop-shadow-sm">
-                Order from the best restaurants in your neighborhood and satisfy
+                Order from the best restaurant in your neighborhood and satisfy
                 your cravings instantly.
               </h2>
             </div>
