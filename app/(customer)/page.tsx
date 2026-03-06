@@ -73,7 +73,7 @@ export default function HomePage() {
                     <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors z-10"></div>
                     <div
                       className="w-full h-full bg-cover bg-center transition-transform duration-500 group-hover:scale-110 relative z-0"
-                      style={cat.image ? { backgroundImage: `url('${cat.image}')` } : {}}
+                      style={cat.image ? { backgroundImage: `url(${cat.image})` } : {}}
                     ></div>
                     {!cat.image && (
                       <div className="absolute inset-0 flex items-center justify-center text-white/50 opacity-50 z-20 mix-blend-overlay">

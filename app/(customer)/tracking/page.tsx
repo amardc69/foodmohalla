@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -78,7 +78,7 @@ function TrackingContent() {
           <h1 className="text-3xl md:text-4xl font-extrabold text-text-main mb-2">
             Order Not Found
           </h1>
-          <p className="text-text-muted text-lg">We couldn't locate this order.</p>
+          <p className="text-text-muted text-lg">We could not locate this order.</p>
         </div>
       </div>
     );

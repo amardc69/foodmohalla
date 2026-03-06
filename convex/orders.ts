@@ -221,7 +221,10 @@ export const updateOrderStatus = mutation({
 });
 
 export const acceptOrder = mutation({
-  args: { orderId: v.id("orders") },
+  args: { 
+    orderId: v.id("orders"),
+    adminTime: v.number()
+  },
   handler: async (ctx, args) => {
     const order = await ctx.db.get(args.orderId);
     if (!order) throw new Error("Order not found");
@@ -232,7 +235,11 @@ export const acceptOrder = mutation({
       throw new Error("Cannot accept order without a delivery address");
     }
 
-    await ctx.db.patch(args.orderId, { status: "Preparing" });
+    await ctx.db.patch(args.orderId, { 
+      status: "Preparing",
+      adminTime: args.adminTime,
+      acceptedAt: Date.now()
+    });
   },
 });
 

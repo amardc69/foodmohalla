@@ -70,6 +70,8 @@ export default defineSchema({
     deliveryLandmark: v.optional(v.string()),
     rejectionReason: v.optional(v.string()),
     userId: v.optional(v.string()),
+    adminTime: v.optional(v.number()),
+    acceptedAt: v.optional(v.number()),
   })
     .index("by_status", ["status"])
     .index("by_user", ["userId"]),
