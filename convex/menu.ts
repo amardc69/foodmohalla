@@ -53,16 +53,23 @@ export const addCategory = mutation({
   args: {
     name: v.string(),
     slug: v.string(),
-    description: v.string(),
-    image: v.string(),
+    description: v.optional(v.string()),
+    image: v.optional(v.string()),
+    storageId: v.optional(v.id("_storage")),
     icon: v.string(),
   },
   handler: async (ctx, args) => {
+    let imageUrl = args.image;
+    if (args.storageId) {
+      imageUrl = (await ctx.storage.getUrl(args.storageId)) || args.image;
+    }
+
     return await ctx.db.insert("categories", {
       name: args.name,
       slug: args.slug,
-      description: args.description,
-      image: args.image,
+      description: args.description || "",
+      image: imageUrl || "",
+      storageId: args.storageId,
       icon: args.icon,
     });
   },
@@ -72,6 +79,27 @@ export const deleteCategory = mutation({
   args: { id: v.id("categories") },
   handler: async (ctx, args) => {
     await ctx.db.delete(args.id);
+  },
+});
+
+export const updateCategory = mutation({
+  args: {
+    _id: v.id("categories"),
+    name: v.optional(v.string()),
+    slug: v.optional(v.string()),
+    icon: v.optional(v.string()),
+    description: v.optional(v.string()),
+    image: v.optional(v.string()),
+    storageId: v.optional(v.id("_storage")),
+  },
+  handler: async (ctx, args) => {
+    const { _id, storageId, ...updates } = args;
+    
+    if (storageId) {
+      updates.image = (await ctx.storage.getUrl(storageId)) || updates.image;
+    }
+
+    await ctx.db.patch(_id, updates);
   },
 });
 

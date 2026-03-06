@@ -28,6 +28,7 @@ export default defineSchema({
     description: v.string(),
     image: v.string(),
     icon: v.string(),
+    storageId: v.optional(v.id("_storage")),
   }).index("by_slug", ["slug"]),
 
   offers: defineTable({

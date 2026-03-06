@@ -75,7 +75,7 @@ export default function CustomerFooter() {
           © 2025 Food Mohalla. All rights reserved.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 items-center">
-          <Link href="/auth/signin" className="text-slate-400 hover:text-primary text-xs font-semibold transition-colors">
+          <Link href="/admin" className="text-slate-400 hover:text-primary text-xs font-semibold transition-colors">
             Admin Panel
           </Link>
           <div className="hidden sm:block h-3 w-px bg-slate-200"></div>

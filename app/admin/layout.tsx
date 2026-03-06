@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 
 const navItems = [
   { icon: "dashboard", label: "Overview", href: "/admin" },
@@ -20,7 +21,48 @@ const settingsItems = [
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { data: session, status } = useSession();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/auth/signin");
+    }
+  }, [status, router]);
+
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // Prevent non-admins from rendering the admin panel
+  if (session && (session.user as any)?.role !== "admin") {
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-sm border border-red-200 p-8 max-w-md w-full text-center">
+          <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span className="material-symbols-outlined text-3xl">gpp_bad</span>
+          </div>
+          <h1 className="text-2xl font-bold text-slate-900 mb-2">Restricted Panel</h1>
+          <p className="text-slate-500 mb-6">
+            You do not have the required administrator privileges to view this area.
+          </p>
+          <div className="flex flex-col gap-3">
+            <Link 
+              href="/"
+              className="w-full py-2.5 px-4 bg-primary text-white font-bold rounded-xl hover:bg-orange-600 transition-colors"
+            >
+              Return Home
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-slate-50 text-slate-900 min-h-screen flex">

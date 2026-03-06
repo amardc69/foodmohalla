@@ -15,6 +15,7 @@ export default function CustomizeMenuPage() {
   const generateUploadUrl = useMutation(api.menu.generateUploadUrl);
   
   const addCategory = useMutation(api.menu.addCategory);
+  const updateCategory = useMutation(api.menu.updateCategory);
   const deleteCategory = useMutation(api.menu.deleteCategory);
 
   // States
@@ -26,8 +27,11 @@ export default function CustomizeMenuPage() {
   // Category state
   const [activeCategoryFilter, setActiveCategoryFilter] = useState<string | null>(null);
   const [isAddingCategory, setIsAddingCategory] = useState(false);
+  const [editingCategoryId, setEditingCategoryId] = useState<Id<"categories"> | null>(null);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [newCategoryIcon, setNewCategoryIcon] = useState("restaurant_menu");
+  const [selectedCategoryImage, setSelectedCategoryImage] = useState<File | null>(null);
+  const [categoryUploading, setCategoryUploading] = useState(false);
 
   const ICONS_LIST = [
     // Meals & Fast Food
@@ -230,17 +234,72 @@ export default function CustomizeMenuPage() {
   const handleAddCategory = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCategoryName.trim()) return;
-    const slug = newCategoryName.toLowerCase().replace(/\s+/g, '-');
-    await addCategory({
-      name: newCategoryName,
-      slug,
-      description: "",
-      image: "",
-      icon: newCategoryIcon
-    });
+    
+    setCategoryUploading(true);
+    try {
+      let storageId = undefined;
+      let imageUrl = "";
+
+      if (selectedCategoryImage) {
+        const postUrl = await generateUploadUrl();
+        const result = await fetch(postUrl, {
+          method: "POST",
+          headers: { "Content-Type": selectedCategoryImage.type },
+          body: selectedCategoryImage,
+        });
+        const { storageId: uploadedStorageId } = await result.json();
+        storageId = uploadedStorageId;
+      }
+
+      const slug = newCategoryName.toLowerCase().replace(/\s+/g, '-');
+      
+      if (editingCategoryId) {
+        await updateCategory({
+          _id: editingCategoryId,
+          name: newCategoryName,
+          slug,
+          icon: newCategoryIcon,
+          storageId: storageId,
+        });
+      } else {
+        await addCategory({
+          name: newCategoryName,
+          slug,
+          description: "",
+          image: "", // Gets managed dynamically if passed storageId
+          storageId: storageId,
+          icon: newCategoryIcon
+        });
+      }
+
+      setNewCategoryName("");
+      setNewCategoryIcon("restaurant_menu");
+      setEditingCategoryId(null);
+      setSelectedCategoryImage(null);
+      setIsAddingCategory(false);
+    } catch (err) {
+      console.error("Failed to save category", err);
+      alert("Failed to save category. Please try again.");
+    } finally {
+      setCategoryUploading(false);
+    }
+  };
+
+  const handleEditCategoryClick = (cat: any, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingCategoryId(cat._id);
+    setNewCategoryName(cat.name);
+    setNewCategoryIcon(cat.icon);
+    setSelectedCategoryImage(null);
+    setIsAddingCategory(true);
+  };
+
+  const closeCategoryModal = () => {
+    setIsAddingCategory(false);
+    setEditingCategoryId(null);
     setNewCategoryName("");
     setNewCategoryIcon("restaurant_menu");
-    setIsAddingCategory(false);
+    setSelectedCategoryImage(null);
   };
 
   const handleDeleteCategory = async (id: Id<"categories">, e: React.MouseEvent) => {
@@ -290,84 +349,117 @@ export default function CustomizeMenuPage() {
           </button>
           
           {categoriesDb.map((cat) => (
-             <div key={cat._id} className="relative group">
-               <button
-                 onClick={() => setActiveCategoryFilter(cat.slug)}
-                 className={`px-4 py-2 rounded-full whitespace-nowrap font-bold text-sm transition-colors flex items-center pr-8 ${
-                   activeCategoryFilter === cat.slug 
-                     ? "bg-slate-800 text-white shadow-md" 
-                     : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                 }`}
-               >
-                 {cat.name}
-               </button>
-               <button
-                 onClick={(e) => handleDeleteCategory(cat._id, e)}
-                 className={`absolute right-1 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full flex items-center justify-center transition-opacity opacity-0 group-hover:opacity-100 ${
-                   activeCategoryFilter === cat.slug ? "text-slate-300 hover:text-red-400" : "text-gray-400 hover:text-red-500"
-                 }`}
-               >
-                 <span className="material-symbols-outlined text-[14px]">close</span>
-               </button>
-             </div>
+            <div key={cat._id} className="inline-flex items-center bg-white border border-gray-200 rounded-full shadow-sm whitespace-nowrap overflow-hidden group">
+              <button
+                onClick={() => setActiveCategoryFilter(activeCategoryFilter === cat.slug ? null : cat.slug)}
+                className={`flex items-center gap-2 px-4 py-2 transition-colors ${
+                  activeCategoryFilter === cat.slug
+                    ? "bg-slate-800 text-white"
+                    : "text-gray-700 hover:bg-gray-50 hover:text-primary"
+                }`}
+              >
+                <span className="material-symbols-outlined text-[18px]">{cat.icon}</span>
+                <span className="text-sm font-bold">{cat.name}</span>
+              </button>
+              
+              <div className="flex border-l border-gray-100 items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <button
+                  onClick={(e) => handleEditCategoryClick(cat, e)}
+                  title="Edit Category"
+                  className="px-2 py-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 transition-colors"
+                >
+                  <span className="material-symbols-outlined text-[16px]">edit</span>
+                </button>
+                <button
+                  onClick={(e) => handleDeleteCategory(cat._id, e)}
+                  title="Delete Category"
+                  className="px-2 py-2 text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors border-l border-gray-100"
+                >
+                  <span className="material-symbols-outlined text-[16px]">close</span>
+                </button>
+              </div>
+            </div>
           ))}
 
           {isAddingCategory && (
-            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" onClick={(e) => { if (e.target === e.currentTarget) setIsAddingCategory(false); }}>
-              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-                  <h3 className="font-bold text-xl text-text-main flex items-center gap-2">
+            <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
+              <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
+                <div className="px-6 py-4 flex justify-between items-center border-b border-gray-100 bg-gray-50/50">
+                  <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
                     <span className="material-symbols-outlined text-primary">category</span>
-                    Add New Category
-                  </h3>
-                  <button onClick={() => setIsAddingCategory(false)} className="text-gray-400 hover:text-gray-600 bg-white rounded-full p-1 shadow-sm border border-gray-100">
-                    <span className="material-symbols-outlined text-[20px] block">close</span>
+                    {editingCategoryId ? "Edit Category" : "New Category"}
+                  </h2>
+                  <button onClick={closeCategoryModal} className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-200 disabled:opacity-50" disabled={categoryUploading}>
+                    <span className="material-symbols-outlined">close</span>
                   </button>
                 </div>
-                <form onSubmit={handleAddCategory} className="p-6 space-y-6">
-                  <div>
-                    <label className="block text-sm font-bold text-text-muted mb-2 uppercase tracking-wide">Category Name</label>
-                    <input 
-                      type="text" 
-                      autoFocus
-                      required
-                      placeholder="e.g. Burgers, Pizzas..." 
-                      className="w-full p-3 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary shadow-sm"
-                      value={newCategoryName}
-                      onChange={(e) => setNewCategoryName(e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <div className="flex items-center justify-between mb-3">
-                      <label className="block text-sm font-bold text-text-muted uppercase tracking-wide">
-                        Choose Icon
-                      </label>
-                      <div className="flex items-center gap-2 text-primary font-bold bg-primary/10 px-3 py-1 rounded-lg">
-                        <span className="material-symbols-outlined text-[18px]">{newCategoryIcon}</span>
-                        <span className="text-xs">{newCategoryIcon}</span>
+                
+                <div className="p-6">
+                  <form onSubmit={handleAddCategory} className="flex flex-col gap-6">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-sm font-bold text-text-muted ml-1">Category Name</label>
+                      <input
+                        type="text"
+                        className="w-full pl-4 pr-10 py-3 border border-gray-200 bg-white rounded-xl focus:ring-2 focus:ring-primary outline-none shadow-sm transition-shadow text-slate-700 font-medium"
+                        placeholder="e.g. Burgers, Pizza, Sides"
+                        value={newCategoryName}
+                        onChange={(e) => setNewCategoryName(e.target.value)}
+                        required
+                        autoFocus
+                        disabled={categoryUploading}
+                      />
+                    </div>
+
+                    {/* Image Upload for Category */}
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-sm font-bold text-text-muted ml-1">Category Image (Optional)</label>
+                      <div className="relative">
+                         <input
+                           type="file"
+                           className="w-full p-2 border border-gray-200 bg-white rounded-xl focus:ring-2 focus:ring-primary outline-none file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 transition-all cursor-pointer text-sm text-slate-500"
+                           accept="image/*"
+                           onChange={(e) => setSelectedCategoryImage(e.target.files?.[0] || null)}
+                           disabled={categoryUploading}
+                         />
                       </div>
                     </div>
-                    <div className="h-[280px] overflow-y-auto grid grid-cols-6 sm:grid-cols-8 gap-2 p-3 border border-gray-200 rounded-xl bg-gray-50/80 shadow-inner">
-                      {ICONS_LIST.map((iconName, i) => (
-                        <button
-                          key={i}
-                          type="button"
-                          onClick={() => setNewCategoryIcon(iconName)}
-                          title={iconName}
-                          className={`flex items-center justify-center w-full aspect-square rounded-xl transition-all ${
-                            newCategoryIcon === iconName ? "bg-primary text-white shadow-md shadow-primary/30 scale-110" : "bg-white text-gray-500 border border-transparent hover:border-gray-200 hover:text-primary hover:shadow-sm"
-                          }`}
-                        >
-                          <span className="material-symbols-outlined text-[20px]">{iconName}</span>
-                        </button>
-                      ))}
+
+                    <div className="flex flex-col gap-3">
+                      <div className="flex items-center justify-between ml-1">
+                        <label className="text-sm font-bold text-text-muted">Select an Icon</label>
+                        <div className="flex items-center gap-2 bg-primary/10 px-3 py-1 rounded-full text-primary">
+                           <span className="material-symbols-outlined text-[18px]">{newCategoryIcon}</span>
+                           <span className="text-xs font-bold uppercase tracking-wider">Selected</span>
+                        </div>
+                      </div>
+                      
+                      <div className="h-[200px] overflow-y-auto grid grid-cols-6 sm:grid-cols-8 gap-2 p-3 border border-gray-200 rounded-xl bg-gray-50/80 shadow-inner">
+                        {ICONS_LIST.map((iconName, i) => (
+                          <button
+                            key={i}
+                            type="button"
+                            onClick={() => setNewCategoryIcon(iconName)}
+                            disabled={categoryUploading}
+                            title={iconName}
+                            className={`flex items-center justify-center w-full aspect-square rounded-xl transition-all disabled:opacity-50 ${
+                              newCategoryIcon === iconName ? "bg-primary text-white shadow-md shadow-primary/30 scale-110" : "bg-white text-gray-500 border border-transparent hover:border-gray-200 hover:text-primary hover:shadow-sm"
+                            }`}
+                          >
+                            <span className="material-symbols-outlined text-[20px]">{iconName}</span>
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                  <button type="submit" className="w-full bg-primary text-white rounded-xl py-3.5 font-bold hover:bg-orange-600 shadow-md shadow-primary/20 transition-all text-base flex justify-center items-center gap-2">
-                    <span className="material-symbols-outlined text-[20px]">add_circle</span>
-                    Create Category
-                  </button>
-                </form>
+                    <button type="submit" disabled={categoryUploading} className="w-full bg-primary text-white rounded-xl py-3.5 font-bold hover:bg-orange-600 shadow-md shadow-primary/20 transition-all text-base flex justify-center items-center gap-2 disabled:opacity-60">
+                      {categoryUploading ? (
+                         <span className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></span>
+                      ) : (
+                         <span className="material-symbols-outlined text-[20px]">{editingCategoryId ? "save" : "add_circle"}</span>
+                      )}
+                      {categoryUploading ? "Saving..." : (editingCategoryId ? "Save Changes" : "Create Category")}
+                    </button>
+                  </form>
+                </div>
               </div>
             </div>
           )}

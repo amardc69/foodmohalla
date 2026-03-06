@@ -170,6 +170,7 @@ export default function AdminDashboard() {
   const [newOrderQueue, setNewOrderQueue] = useState<any[]>([]);
   const [showNewOrderDialog, setShowNewOrderDialog] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
+  const [adminTimeEstimate, setAdminTimeEstimate] = useState<number>(30); // Default to 30 mins
   const [showRejectForm, setShowRejectForm] = useState(false);
 
   // Ref for tracking known order IDs
@@ -219,16 +220,21 @@ export default function AdminDashboard() {
       alert("Cannot accept order — no delivery address provided by customer.");
       return;
     }
+    
     try {
-      await acceptOrderMutation({ orderId: currentNewOrder._id as Id<"orders"> });
+      await acceptOrderMutation({ 
+        orderId: currentNewOrder._id as Id<"orders">,
+        adminTime: adminTimeEstimate 
+      });
       setNewOrderQueue((prev) => prev.slice(1));
       setShowRejectForm(false);
       setRejectReason("");
+      setAdminTimeEstimate(30);
       if (newOrderQueue.length <= 1) setShowNewOrderDialog(false);
     } catch (err: any) {
       alert(err.message || "Failed to accept order");
     }
-  }, [currentNewOrder, acceptOrderMutation, newOrderQueue.length]);
+  }, [currentNewOrder, acceptOrderMutation, newOrderQueue.length, adminTimeEstimate]);
 
   const handleRejectNewOrder = useCallback(async () => {
     if (!currentNewOrder || !rejectReason.trim()) return;
@@ -711,14 +717,34 @@ export default function AdminDashboard() {
 
               {/* Action buttons */}
               {!showRejectForm && (
-                <div className="flex gap-3 pt-1">
-                  <Button variant="outline" className="flex-1 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700" onClick={() => setShowRejectForm(true)}>
-                    Reject
-                  </Button>
-                  <Button className="flex-1 bg-green-600 hover:bg-green-700 text-white" onClick={handleAcceptNewOrder}>
-                    <span className="material-symbols-outlined text-[18px] mr-1">check</span>
-                    Accept Order
-                  </Button>
+                <div className="space-y-4 pt-1">
+                  <div className="flex flex-col gap-2 bg-primary/5 p-3 rounded-xl border border-primary/20">
+                    <label className="text-sm font-bold text-slate-800">Estimated Prep & Delivery Time</label>
+                    <div className="flex items-center gap-3">
+                      <input 
+                        type="range" 
+                        min="10" 
+                        max="120" 
+                        step="5" 
+                        value={adminTimeEstimate} 
+                        onChange={(e) => setAdminTimeEstimate(parseInt(e.target.value))}
+                        className="flex-1 accent-primary" 
+                      />
+                      <span className="font-bold text-primary whitespace-nowrap bg-white px-3 py-1 rounded-full shadow-sm text-sm border border-primary/10">
+                        {adminTimeEstimate} mins
+                      </span>
+                    </div>
+                  </div>
+                
+                  <div className="flex gap-3">
+                    <Button variant="outline" className="flex-1 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 font-bold" onClick={() => setShowRejectForm(true)}>
+                      Reject
+                    </Button>
+                    <Button className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold shadow-md shadow-green-600/20" onClick={handleAcceptNewOrder}>
+                      <span className="material-symbols-outlined text-[18px] mr-1">check</span>
+                      Accept Order
+                    </Button>
+                  </div>
                 </div>
               )}
 

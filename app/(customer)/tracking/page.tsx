@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -23,6 +23,43 @@ function TrackingContent() {
   );
   const displayOrder = orderId ? order : fallbackData?.orders?.[0];
 
+  const [timeLeft, setTimeLeft] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!displayOrder) return;
+
+    const calculateTimeLeft = () => {
+      // If it's delivered or rejected, freeze the timer visually or don't show it at all
+      if (displayOrder.status === "Delivered" || displayOrder.status === "Rejected") {
+        setTimeLeft(0);
+        return;
+      }
+
+      // If missing critical timestamp data, default to an initial guestimate
+      if (!displayOrder.acceptedAt || !displayOrder.adminTime) {
+        setTimeLeft(25); 
+        return;
+      }
+
+      const now = Date.now();
+      const acceptedTime = displayOrder.acceptedAt;
+      const estimatedDeliveryMS = displayOrder.adminTime * 60 * 1000;
+      
+      const targetTime = acceptedTime + estimatedDeliveryMS;
+      const msLeft = targetTime - now;
+
+      // Convert ms to minutes and stall at 2
+      let minsLeft = Math.max(2, Math.ceil(msLeft / 60000));
+      
+      setTimeLeft(minsLeft);
+    };
+
+    calculateTimeLeft();
+    const interval = setInterval(calculateTimeLeft, 60000); // 1 minute interval
+
+    return () => clearInterval(interval);
+  }, [displayOrder]);
+
   if (displayOrder === undefined) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -35,13 +72,13 @@ function TrackingContent() {
     return (
       <div className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
         <div className="text-center py-20">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-green-100 text-green-600 mb-4 animate-bounce">
-            <span className="material-symbols-outlined text-5xl">check_circle</span>
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-red-100 text-red-600 mb-4">
+            <span className="material-symbols-outlined text-5xl">warning</span>
           </div>
           <h1 className="text-3xl md:text-4xl font-extrabold text-text-main mb-2">
-            Order Placed Successfully!
+            Order Not Found
           </h1>
-          <p className="text-text-muted text-lg">Your order is being processed.</p>
+          <p className="text-text-muted text-lg">We couldn't locate this order.</p>
         </div>
       </div>
     );
@@ -75,11 +112,16 @@ function TrackingContent() {
           <span className="material-symbols-outlined text-5xl">check_circle</span>
         </div>
         <h1 className="text-3xl md:text-4xl font-extrabold text-text-main mb-2">
-          Order Placed Successfully!
+          Order placed successfully!
         </h1>
         <p className="text-text-muted text-lg">
-          Order {displayOrder.displayId} • Estimated delivery in{" "}
-          <span className="text-primary font-bold">25-35 mins</span>
+          Order {displayOrder.displayId}
+          {displayOrder.status !== "Delivered" && displayOrder.status !== "Rejected" && timeLeft !== null && (
+            <>
+              {" "}• Estimated delivery in{" "}
+              <span className="text-primary font-bold">{timeLeft} mins</span>
+            </>
+          )}
         </p>
       </div>
 
