@@ -64,18 +64,14 @@ function SignInForm() {
       redirect: false,
     });
 
-    toast.promise(loginPromise, {
-      loading: 'Signing in...',
-      success: 'Welcome back!',
-      error: 'Invalid username or password. Please try again.',
-    });
-
     const res = await loginPromise;
 
     if (res?.error) {
       setErrorMsg("Invalid username or password. Please try again.");
+      toast.error("Invalid username or password.");
       setLoading(false);
     } else {
+      toast.success("Welcome back!");
       // Small delay to let the JWT cookie propagate, then check role
       await new Promise((r) => setTimeout(r, 500));
       
@@ -124,19 +120,15 @@ function SignInForm() {
       redirect: false,
     });
     
-    toast.promise(registerPromise, {
-      loading: 'Creating your account...',
-      success: 'Account created successfully!',
-      error: 'Registration failed. This username may already be taken.',
-    });
-
     const res = await registerPromise;
 
     setLoading(false);
 
     if (!res?.error) {
+      toast.success("Account created successfully!");
       router.push(customerRedirect);
     } else {
+      toast.error("Registration failed. This username may already be taken.");
       setErrorMsg("Registration failed. Please check your details or try a different username.");
     }
   };
