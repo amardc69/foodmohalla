@@ -57,6 +57,9 @@ export default function CheckoutPage() {
   const convex = useConvex();
   const addAddressMutation = useMutation(api.addresses.addAddress);
 
+  const freeDeliveryEnabled = useQuery(api.adminSettings.getSetting, { key: "freeDeliveryEnabled" }) === "true";
+  const freeDeliveryThreshold = Number(useQuery(api.adminSettings.getSetting, { key: "freeDeliveryThreshold" }) || 0);
+
   // Show loading while checking auth
   if (status === "loading") {
     return (
@@ -192,7 +195,8 @@ export default function CheckoutPage() {
     return (item.menuItem.price + addonSum) * item.quantity;
   }
 
-  const grandTotal = total + DELIVERY_FEE + TAX_RATE - discountAmount;
+  const currentDeliveryFee = freeDeliveryEnabled && total >= freeDeliveryThreshold ? 0 : DELIVERY_FEE;
+  const grandTotal = total + currentDeliveryFee + TAX_RATE - discountAmount;
 
   async function placeOrder() {
     if (!userId || cart.length === 0) return;
@@ -499,7 +503,14 @@ export default function CheckoutPage() {
                 </div>
                 <div className="flex justify-between text-sm text-text-muted">
                   <span className="flex items-center gap-1">Delivery Fee <span className="material-symbols-outlined text-[14px] text-gray-400">info</span></span>
-                  <span>₹{DELIVERY_FEE.toFixed(2)}</span>
+                  {currentDeliveryFee === 0 ? (
+                    <span className="flex items-center gap-1">
+                      <span className="line-through text-gray-400 text-xs">₹{DELIVERY_FEE.toFixed(2)}</span>
+                      <span className="text-green-600 font-bold">Free</span>
+                    </span>
+                  ) : (
+                    <span>₹{currentDeliveryFee.toFixed(2)}</span>
+                  )}
                 </div>
                 <div className="flex justify-between text-sm text-text-muted">
                   <span className="flex items-center gap-1">Taxes &amp; Charges <span className="material-symbols-outlined text-[14px] text-gray-400">info</span></span>

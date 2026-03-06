@@ -27,6 +27,26 @@ export default function CustomizeMenuPage() {
   const [activeCategoryFilter, setActiveCategoryFilter] = useState<string | null>(null);
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
+  const [newCategoryIcon, setNewCategoryIcon] = useState("restaurant_menu");
+
+  const ICONS_LIST = [
+    "restaurant_menu", "lunch_dining", "local_pizza", "tapas", "local_cafe", "icecream",
+    "restaurant", "fastfood", "local_bar", "local_dining", "set_meal", "bakery_dining",
+    "brunch_dining", "breakfast_dining", "ramen_dining", "takeout_dining", "celebration",
+    "local_fire_department", "kebab_dining", "soup_kitchen", "liquor", "coffee", "cake",
+    "cookie", "egg", "egg_alt", "local_drink", "wine_bar", "emoji_food_beverage", "bento",
+    "rice_bowl", "nightlife", "dinner_dining", "sports_bar", "flatware",
+    "kitchen", "food_bank", "no_meals", "room_service", "delivery_dining",
+    "menu_book", "storefront", "store", "shopping_cart", "shopping_basket",
+    "receipt", "receipt_long", "loyalty", "local_offer", "sell", "discount", "savings",
+    "redeem", "card_giftcard", "featured_play_list", "favorite", "star", "stars",
+    "verified", "new_releases", "whatshot", "thumb_up", "trending_up", "pets", "grass",
+    "eco", "nature", "cruelty_free", "ac_unit", "fireplace", "water_drop", "bolt",
+    "medication", "healing", "fitness_center", "directions_run", "pedal_bike", "agriculture",
+    "sailing", "flight", "directions_car", "local_shipping", "two_wheeler", "train",
+    "subway", "tram", "directions_transit", "directions_walk", "home", "domain", "apartment",
+    "location_city", "person", "group", "diversity_3", "handshake", "child_care", "elderly"
+  ];
 
   // Form state
   const [formData, setFormData] = useState({
@@ -44,6 +64,7 @@ export default function CustomizeMenuPage() {
     isOutOfStock: false,
     isBestSeller: false,
     isFeatured: false,
+    calories: 0,
     addons: [] as { name: string; price: number }[],
   });
 
@@ -67,6 +88,7 @@ export default function CustomizeMenuPage() {
       isOutOfStock: item.isOutOfStock || false,
       isBestSeller: item.isBestSeller || false,
       isFeatured: item.isFeatured || false,
+      calories: item.calories || 0,
       addons: item.addons || [],
     });
     setEditingId(item._id);
@@ -90,6 +112,7 @@ export default function CustomizeMenuPage() {
       isOutOfStock: false,
       isBestSeller: false,
       isFeatured: false,
+      calories: 0,
       addons: [],
     });
     setEditingId(null);
@@ -173,9 +196,10 @@ export default function CustomizeMenuPage() {
       slug,
       description: "",
       image: "",
-      icon: "restaurant_menu"
+      icon: newCategoryIcon
     });
     setNewCategoryName("");
+    setNewCategoryIcon("restaurant_menu");
     setIsAddingCategory(false);
   };
 
@@ -248,32 +272,73 @@ export default function CustomizeMenuPage() {
              </div>
           ))}
 
-          {isAddingCategory ? (
-            <form onSubmit={handleAddCategory} className="flex items-center gap-2 pl-2 border-l border-gray-200">
-              <input 
-                type="text" 
-                autoFocus
-                placeholder="Category Name" 
-                className="px-3 py-1.5 border border-primary rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary focus:border-transparent w-40"
-                value={newCategoryName}
-                onChange={(e) => setNewCategoryName(e.target.value)}
-              />
-              <button type="submit" className="w-8 h-8 flex items-center justify-center bg-primary text-white rounded-lg hover:bg-orange-600 shadow-sm">
-                <span className="material-symbols-outlined text-[16px]">check</span>
-              </button>
-              <button type="button" onClick={() => setIsAddingCategory(false)} className="w-8 h-8 flex items-center justify-center bg-gray-100 text-gray-500 rounded-lg hover:bg-gray-200">
-                <span className="material-symbols-outlined text-[16px]">close</span>
-              </button>
-            </form>
-          ) : (
-            <button
+          {isAddingCategory && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" onClick={(e) => { if (e.target === e.currentTarget) setIsAddingCategory(false); }}>
+              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                  <h3 className="font-bold text-xl text-text-main flex items-center gap-2">
+                    <span className="material-symbols-outlined text-primary">category</span>
+                    Add New Category
+                  </h3>
+                  <button onClick={() => setIsAddingCategory(false)} className="text-gray-400 hover:text-gray-600 bg-white rounded-full p-1 shadow-sm border border-gray-100">
+                    <span className="material-symbols-outlined text-[20px] block">close</span>
+                  </button>
+                </div>
+                <form onSubmit={handleAddCategory} className="p-6 space-y-6">
+                  <div>
+                    <label className="block text-sm font-bold text-text-muted mb-2 uppercase tracking-wide">Category Name</label>
+                    <input 
+                      type="text" 
+                      autoFocus
+                      required
+                      placeholder="e.g. Burgers, Pizzas..." 
+                      className="w-full p-3 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary shadow-sm"
+                      value={newCategoryName}
+                      onChange={(e) => setNewCategoryName(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <label className="block text-sm font-bold text-text-muted uppercase tracking-wide">
+                        Choose Icon
+                      </label>
+                      <div className="flex items-center gap-2 text-primary font-bold bg-primary/10 px-3 py-1 rounded-lg">
+                        <span className="material-symbols-outlined text-[18px]">{newCategoryIcon}</span>
+                        <span className="text-xs">{newCategoryIcon}</span>
+                      </div>
+                    </div>
+                    <div className="h-[280px] overflow-y-auto grid grid-cols-6 sm:grid-cols-8 gap-2 p-3 border border-gray-200 rounded-xl bg-gray-50/80 shadow-inner">
+                      {ICONS_LIST.map((iconName, i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => setNewCategoryIcon(iconName)}
+                          title={iconName}
+                          className={`flex items-center justify-center w-full aspect-square rounded-xl transition-all ${
+                            newCategoryIcon === iconName ? "bg-primary text-white shadow-md shadow-primary/30 scale-110" : "bg-white text-gray-500 border border-transparent hover:border-gray-200 hover:text-primary hover:shadow-sm"
+                          }`}
+                        >
+                          <span className="material-symbols-outlined text-[20px]">{iconName}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <button type="submit" className="w-full bg-primary text-white rounded-xl py-3.5 font-bold hover:bg-orange-600 shadow-md shadow-primary/20 transition-all text-base flex justify-center items-center gap-2">
+                    <span className="material-symbols-outlined text-[20px]">add_circle</span>
+                    Create Category
+                  </button>
+                </form>
+              </div>
+            </div>
+          )}
+
+          <button
               onClick={() => setIsAddingCategory(true)}
-              className="px-4 py-2 border-2 border-dashed border-gray-300 text-gray-500 rounded-full hover:bg-gray-50 hover:border-primary hover:text-primary transition-colors whitespace-nowrap font-bold text-sm flex items-center gap-1 cursor-pointer"
+              className="px-4 py-2 border-2 border-dashed border-gray-300 text-gray-500 rounded-full hover:bg-gray-50 hover:border-primary hover:text-primary transition-colors whitespace-nowrap font-bold text-sm flex items-center gap-1 cursor-pointer bg-white"
             >
               <span className="material-symbols-outlined text-[16px]">add</span>
               New Category
-            </button>
-          )}
+          </button>
         </div>
       </div>
 
@@ -552,6 +617,19 @@ export default function CustomizeMenuPage() {
                          className="w-full pl-3 pr-4 py-2 border border-gray-200 bg-white rounded-lg focus:ring-2 focus:ring-primary outline-none"
                          value={formData.discount}
                          onChange={(e) => setFormData({ ...formData, discount: parseFloat(e.target.value) || 0 })}
+                       />
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <label className="block text-sm font-bold text-text-muted">Calories (kcal)</label>
+                    <div className="relative">
+                       <input
+                         type="number"
+                         min="0"
+                         className="w-full pl-3 pr-4 py-2 border border-gray-200 bg-white rounded-lg focus:ring-2 focus:ring-primary outline-none"
+                         value={formData.calories}
+                         onChange={(e) => setFormData({ ...formData, calories: parseInt(e.target.value) || 0 })}
                        />
                     </div>
                   </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
@@ -10,6 +10,10 @@ export default function OffersPage() {
   const addOffer = useMutation(api.offers.addOffer);
   const deleteOffer = useMutation(api.offers.deleteOffer);
   const toggleOfferStatus = useMutation(api.offers.toggleOfferStatus);
+
+  const freeDeliveryEnabled = useQuery(api.adminSettings.getSetting, { key: "freeDeliveryEnabled" });
+  const freeDeliveryThreshold = useQuery(api.adminSettings.getSetting, { key: "freeDeliveryThreshold" });
+  const setSetting = useMutation(api.adminSettings.setSetting);
 
   const [isEditing, setIsEditing] = useState(false);
   
@@ -24,6 +28,29 @@ export default function OffersPage() {
     usageLimitPerUser: 1,
     isActive: true,
   });
+
+  const [localFdEnabled, setLocalFdEnabled] = useState<boolean>(false);
+  const [localFdThreshold, setLocalFdThreshold] = useState<string>("0");
+  const [saveFdMsg, setSaveFdMsg] = useState("");
+
+  useEffect(() => {
+    if (freeDeliveryEnabled !== undefined) {
+      setLocalFdEnabled(freeDeliveryEnabled === "true");
+    }
+  }, [freeDeliveryEnabled]);
+
+  useEffect(() => {
+    if (freeDeliveryThreshold !== undefined) {
+      setLocalFdThreshold(freeDeliveryThreshold || "0");
+    }
+  }, [freeDeliveryThreshold]);
+
+  const handleSaveFd = async () => {
+    await setSetting({ key: "freeDeliveryEnabled", value: localFdEnabled ? "true" : "false" });
+    await setSetting({ key: "freeDeliveryThreshold", value: localFdThreshold.toString() });
+    setSaveFdMsg("Saved!");
+    setTimeout(() => setSaveFdMsg(""), 2000);
+  };
 
   if (offers === undefined) {
     return <div className="p-8 text-center text-slate-500">Loading offers...</div>;
@@ -180,6 +207,61 @@ export default function OffersPage() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-8">
+      
+      {/* Free Delivery Global Config */}
+      <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-10 -mt-10"></div>
+        <div className="relative z-10">
+          <h3 className="text-xl font-bold text-text-main flex items-center gap-2">
+            <span className="material-symbols-outlined text-primary bg-primary/10 p-1.5 rounded-lg">local_shipping</span>
+            Global Free Delivery
+          </h3>
+          <p className="text-sm text-text-muted mt-2 max-w-xl leading-relaxed">
+            Enable a persistent free delivery offer across the menu. When active, delivery fees will automatically become ₹0 if the customer's cart exceeds the configured threshold.
+          </p>
+        </div>
+        <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-gray-50/80 p-5 rounded-2xl border border-gray-100 shadow-inner w-full lg:w-auto">
+           <div className="flex items-center gap-3">
+             <label className="text-sm font-bold text-slate-700">Status</label>
+             <button
+               onClick={() => setLocalFdEnabled(!localFdEnabled)}
+               className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none ${localFdEnabled ? "bg-green-500" : "bg-gray-300"}`}
+             >
+               <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform ${localFdEnabled ? "translate-x-6" : "translate-x-1"}`} />
+             </button>
+           </div>
+           
+           <div className="h-8 w-px bg-gray-200 hidden sm:block mx-1"></div>
+           
+           <div className="flex items-center gap-2">
+             <label className="text-sm font-bold text-slate-700 whitespace-nowrap">Min Order (₹)</label>
+             <div className="relative">
+               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">₹</span>
+               <input
+                  type="number"
+                  min="0"
+                  className="w-24 pl-7 pr-3 py-1.5 border border-gray-300 rounded-lg text-sm font-bold outline-none focus:border-primary focus:ring-1 focus:ring-primary disabled:opacity-50 disabled:bg-gray-100 bg-white"
+                  value={localFdThreshold}
+                  onChange={(e) => setLocalFdThreshold(e.target.value)}
+                  disabled={!localFdEnabled}
+               />
+             </div>
+           </div>
+           
+           <div className="flex items-center gap-3 w-full sm:w-auto mt-2 sm:mt-0">
+             <button
+               onClick={handleSaveFd}
+               className="w-full sm:w-auto px-5 py-2 bg-slate-800 text-white text-sm font-bold rounded-lg hover:bg-slate-700 transition-colors shadow-sm active:scale-95"
+             >
+               Save Changes
+             </button>
+             {saveFdMsg && <span className="text-xs font-bold text-green-600 animate-in fade-in duration-300 whitespace-nowrap">{saveFdMsg}</span>}
+           </div>
+        </div>
+      </div>
+
+      <hr className="border-gray-200" />
+
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl md:text-3xl font-bold text-text-main tracking-tight">

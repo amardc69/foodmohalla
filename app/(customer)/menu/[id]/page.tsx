@@ -9,11 +9,7 @@ import type { MenuItem } from "@/lib/types";
 import { useSession } from "next-auth/react";
 import { useCartUserId } from "@/lib/useGuestId";
 
-const addons = [
-  { name: "Extra Cheese Slice", price: 1.5 },
-  { name: "Extra Paneer Patty", price: 3.0 },
-  { name: "Peri Peri Sprinkles", price: 0.5 },
-];
+// Removed hardcoded addons
 
 const instructions = ["No Onions", "No Mayo", "Less Spicy"];
 
@@ -53,8 +49,9 @@ export default function ProductPage() {
     if (!item || !userId) return;
     setIsAdding(true);
     
+    const itemAddons = item.addons || [];
     const enrichedAddons = selectedAddons.map(name => {
-      const addon = addons.find(a => a.name === name);
+      const addon = itemAddons.find((a: any) => a.name === name);
       return { name, price: addon?.price || 0 };
     });
     
@@ -73,7 +70,8 @@ export default function ProductPage() {
   }
 
   const addonTotal = selectedAddons.reduce((sum, name) => {
-    const addon = addons.find((a) => a.name === name);
+    const itemAddons = item?.addons || [];
+    const addon = itemAddons.find((a: any) => a.name === name);
     return sum + (addon?.price || 0);
   }, 0);
 
@@ -216,13 +214,14 @@ export default function ProductPage() {
                   <span className="material-symbols-outlined text-lg">
                     local_fire_department
                   </span>
-                  <span className="text-sm font-medium">450 kcal</span>
+                  <span className="text-sm font-medium">{item.calories ? `${item.calories} kcal` : "N/A"}</span>
                 </div>
               </div>
             </div>
 
             {/* Add-ons */}
             <div className="space-y-6">
+              {item.addons && item.addons.length > 0 && (
               <div>
                 <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
                   Choice of Add-ons
@@ -231,7 +230,7 @@ export default function ProductPage() {
                   </span>
                 </h3>
                 <div className="space-y-3">
-                  {addons.map((addon) => (
+                  {item.addons.map((addon: any) => (
                     <label
                       key={addon.name}
                       className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer hover:border-primary transition-colors bg-white ${
@@ -256,6 +255,7 @@ export default function ProductPage() {
                   ))}
                 </div>
               </div>
+              )}
 
               {/* Instructions */}
               <div>

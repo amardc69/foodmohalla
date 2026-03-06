@@ -97,6 +97,7 @@ export const addMenuItem = mutation({
     isOutOfStock: v.optional(v.boolean()),
     isBestSeller: v.optional(v.boolean()),
     isFeatured: v.optional(v.boolean()),
+    calories: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     let imageUrl = args.image;
@@ -120,6 +121,7 @@ export const addMenuItem = mutation({
       isOutOfStock: args.isOutOfStock,
       isBestSeller: args.isBestSeller,
       isFeatured: args.isFeatured,
+      calories: args.calories,
     });
   },
 });
@@ -142,6 +144,7 @@ export const updateMenuItem = mutation({
     isOutOfStock: v.optional(v.boolean()),
     isBestSeller: v.optional(v.boolean()),
     isFeatured: v.optional(v.boolean()),
+    calories: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const { _id, storageId, ...updates } = args;

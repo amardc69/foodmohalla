@@ -18,15 +18,6 @@ import {
 import { useSession } from "next-auth/react";
 import { useCartUserId } from "@/lib/useGuestId";
 
-const categoryIcons: Record<string, string> = {
-  burgers: "lunch_dining",
-  pizza: "local_pizza",
-  sides: "tapas",
-  beverages: "local_cafe",
-  desserts: "icecream",
-  desi: "restaurant",
-};
-
 const defaultInstructions = ["No Onions", "No Mayo", "Less Spicy", "Extra Spicy", "No Garlic"];
 const defaultAddonsFallback = [
   { name: "Extra Cheese Slice", price: 1.5 },
@@ -53,6 +44,27 @@ function MenuContent() {
   const cartItems = useQuery(api.cart.getCart, userId ? { userId } : "skip");
   const addToCart = useMutation(api.cart.addToCart);
   const updateCartItem = useMutation(api.cart.updateCartItem);
+
+  const categoriesDb = useQuery(api.categories.getCategories) || [];
+  
+  const freeDeliveryEnabled = useQuery(api.adminSettings.getSetting, { key: "freeDeliveryEnabled" }) === "true";
+  const freeDeliveryThreshold = Number(useQuery(api.adminSettings.getSetting, { key: "freeDeliveryThreshold" }) || 0);
+
+  const userFavourites = useQuery(api.favourites.getUserFavourites, userId ? { userId } : "skip");
+  const addFavourite = useMutation(api.favourites.addFavourite);
+  const removeFavourite = useMutation(api.favourites.removeFavourite);
+
+  async function handleToggleFavourite(item: any, e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!userId) return;
+    const isFav = userFavourites?.some((f: any) => f.id === item.id);
+    if (isFav) {
+      await removeFavourite({ userId, menuItemId: item.id });
+    } else {
+      await addFavourite({ userId, menuItemId: item.id });
+    }
+  }
 
   const itemsQuery = useQuery(api.menu.getMenuItems, {
     category: activeCategory || undefined,
@@ -144,38 +156,40 @@ function MenuContent() {
                 All Items
               </span>
             </button>
-            {Object.entries(categoryIcons).map(([slug, icon]) => (
+            {categoriesDb.map((cat: any) => (
               <button
-                key={slug}
-                onClick={() => setActiveCategory(slug === activeCategory ? "" : slug)}
+                key={cat.slug}
+                onClick={() => setActiveCategory(cat.slug === activeCategory ? "" : cat.slug)}
                 className={`group flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-left ${
-                  activeCategory === slug
+                  activeCategory === cat.slug
                     ? "bg-primary/10 text-primary border border-primary/20 shadow-sm"
                     : "hover:bg-slate-100 text-slate-600"
                 }`}
               >
                 <span className="material-symbols-outlined group-hover:scale-110 transition-transform">
-                  {icon}
+                  {cat.icon || "restaurant_menu"}
                 </span>
-                <span className={`text-sm capitalize ${activeCategory === slug ? "font-bold" : "font-medium"}`}>
-                  {slug}
+                <span className={`text-sm capitalize ${activeCategory === cat.slug ? "font-bold" : "font-medium"}`}>
+                  {cat.name}
                 </span>
               </button>
             ))}
           </nav>
         </div>
         {/* Promo Card */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary to-orange-600 p-5 text-white shadow-lg">
-          <div className="absolute top-0 right-0 -mt-2 -mr-2 h-16 w-16 rounded-full bg-white/20 blur-xl"></div>
-          <h3 className="relative text-lg font-bold mb-1">Free Delivery</h3>
-          <p className="relative text-xs opacity-90 mb-3">On orders above ₹25</p>
-          <Link
-            href="/menu"
-            className="relative block w-full rounded-lg bg-white py-2 text-xs font-bold text-primary shadow-sm hover:bg-slate-50 transition-colors text-center"
-          >
-            Order Now
-          </Link>
-        </div>
+        {freeDeliveryEnabled && (
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary to-orange-600 p-5 text-white shadow-lg">
+            <div className="absolute top-0 right-0 -mt-2 -mr-2 h-16 w-16 rounded-full bg-white/20 blur-xl"></div>
+            <h3 className="relative text-lg font-bold mb-1">Free Delivery</h3>
+            <p className="relative text-xs opacity-90 mb-3">On orders above ₹{freeDeliveryThreshold}</p>
+            <Link
+              href="/menu"
+              className="relative block w-full rounded-lg bg-white py-2 text-xs font-bold text-primary shadow-sm hover:bg-slate-50 transition-colors text-center"
+            >
+              Order Now
+            </Link>
+          </div>
+        )}
       </aside>
 
       {/* Main Content */}
@@ -252,8 +266,11 @@ function MenuContent() {
                         {item.badge}
                       </div>
                     )}
-                    <button className="absolute top-3 right-3 size-8 bg-white/90 backdrop-blur rounded-full flex items-center justify-center text-slate-400 hover:text-red-500 hover:scale-110 transition-all shadow-sm">
-                      <span className="material-symbols-outlined text-[20px]">
+                    <button 
+                      onClick={(e) => handleToggleFavourite(item, e)}
+                      className="absolute top-3 right-3 size-8 bg-white/90 backdrop-blur rounded-full flex items-center justify-center text-slate-400 hover:text-red-500 hover:scale-110 transition-all shadow-sm z-10"
+                    >
+                      <span className={`material-symbols-outlined text-[20px] ${userFavourites?.some((f: any) => f.id === item.id) ? "fill-current text-red-500" : ""}`}>
                         favorite
                       </span>
                     </button>

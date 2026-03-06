@@ -29,51 +29,6 @@ export default function HomePage() {
                 your cravings instantly.
               </h2>
             </div>
-            <div className="relative z-20 w-full max-w-4xl mt-8">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 w-full px-2">
-                {[
-                  {
-                    icon: "electric_moped",
-                    title: "Fast Delivery",
-                    desc: "Under 30 mins",
-                    gradient: "from-orange-500 to-rose-500"
-                  },
-                  {
-                    icon: "local_dining",
-                    title: "Dine-In",
-                    desc: "Book a table",
-                    gradient: "from-blue-500 to-indigo-500"
-                  },
-                  {
-                    icon: "redeem",
-                    title: "Offers",
-                    desc: "Up to 50% off",
-                    gradient: "from-emerald-500 to-teal-500"
-                  },
-                  {
-                    icon: "workspace_premium",
-                    title: "Premium",
-                    desc: "Top rated only",
-                    gradient: "from-purple-500 to-pink-500"
-                  }
-                ].map((item, i) => (
-                  <Link
-                    key={i}
-                    href="/menu"
-                    className="group relative flex flex-col items-center justify-center gap-2 p-4 md:p-6 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 shadow-xl overflow-hidden cursor-pointer transition-all duration-500 hover:scale-105 hover:-translate-y-2 hover:bg-white/20 hover:shadow-2xl hover:shadow-white/10"
-                  >
-                    <div className={`absolute inset-0 bg-gradient-to-br ${item.gradient} opacity-0 group-hover:opacity-20 transition-opacity duration-500`}></div>
-                    <div className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-white/20 flex items-center justify-center text-white backdrop-blur-md border border-white/30 shadow-inner group-hover:rotate-12 transition-transform duration-500 ease-out">
-                      <span className="material-symbols-outlined !text-2xl md:!text-3xl drop-shadow-md">{item.icon}</span>
-                    </div>
-                    <div className="flex flex-col items-center text-center mt-1">
-                      <span className="text-white font-bold text-sm md:text-base leading-tight drop-shadow-md">{item.title}</span>
-                      <span className="text-white/70 text-xs md:text-sm font-medium mt-0.5">{item.desc}</span>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </div>
           </div>
         </div>
       </div>
