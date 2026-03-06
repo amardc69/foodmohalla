@@ -30,22 +30,39 @@ export default function CustomizeMenuPage() {
   const [newCategoryIcon, setNewCategoryIcon] = useState("restaurant_menu");
 
   const ICONS_LIST = [
-    "restaurant_menu", "lunch_dining", "local_pizza", "tapas", "local_cafe", "icecream",
-    "restaurant", "fastfood", "local_bar", "local_dining", "set_meal", "bakery_dining",
-    "brunch_dining", "breakfast_dining", "ramen_dining", "takeout_dining", "celebration",
-    "local_fire_department", "kebab_dining", "soup_kitchen", "liquor", "coffee", "cake",
-    "cookie", "egg", "egg_alt", "local_drink", "wine_bar", "emoji_food_beverage", "bento",
-    "rice_bowl", "nightlife", "dinner_dining", "sports_bar", "flatware",
-    "kitchen", "food_bank", "no_meals", "room_service", "delivery_dining",
-    "menu_book", "storefront", "store", "shopping_cart", "shopping_basket",
-    "receipt", "receipt_long", "loyalty", "local_offer", "sell", "discount", "savings",
-    "redeem", "card_giftcard", "featured_play_list", "favorite", "star", "stars",
-    "verified", "new_releases", "whatshot", "thumb_up", "trending_up", "pets", "grass",
-    "eco", "nature", "cruelty_free", "ac_unit", "fireplace", "water_drop", "bolt",
-    "medication", "healing", "fitness_center", "directions_run", "pedal_bike", "agriculture",
-    "sailing", "flight", "directions_car", "local_shipping", "two_wheeler", "train",
-    "subway", "tram", "directions_transit", "directions_walk", "home", "domain", "apartment",
-    "location_city", "person", "group", "diversity_3", "handshake", "child_care", "elderly"
+    // Meals & Fast Food
+    "restaurant_menu", "lunch_dining", "local_pizza", "tapas", "burger", "fastfood", "set_meal",
+    "bento", "rice_bowl", "soup_kitchen", "ramen_dining", "kebab_dining", "dinner_dining",
+    "brunch_dining", "breakfast_dining", "bakery_dining", "takeout_dining",
+    
+    // Drinks & Cafe
+    "local_cafe", "coffee", "emoji_food_beverage", "coffee_maker", "local_drink", "water_drop",
+    "liquor", "wine_bar", "local_bar", "sports_bar", "nightlife", "celebration", "glass_cup",
+
+    // Sweets & Desserts
+    "icecream", "cake", "cookie", "bakery_dining", 
+    
+    // Ingredients
+    "egg", "egg_alt", "eco", "grass", "nature", "agriculture",
+    
+    // Utensils & Dining
+    "restaurant", "local_dining", "flatware", "menu_book", "room_service", "delivery_dining",
+    "kitchen", "food_bank", "outdoor_grill", "microwave", "blender", "iron", "gas_meter",
+
+    // Food Traits & Prep
+    "local_fire_department", "ac_unit", "cruelty_free", "healing",
+
+    // Embellishments/General
+    "favorite", "favorite_border", "star", "stars", "whatshot", "thumb_up", "new_releases",
+    "verified", "loyalty", "local_offer", "sell", "discount", "redeem", "savings", "storefront",
+    
+    // Extras (filling out 100 common material-symbols in food context)
+    "shopping_cart", "shopping_basket", "receipt_long", "receipt", "local_shipping", "two_wheeler",
+    "electric_moped", "pedal_bike", "delivery_dining", "store", "restaurant",
+    "home", "location_on", "my_location", "map", "tour", "directions_walk", "directions_run",
+    "volunteer_activism", "support_agent", "sentiment_satisfied", "sentiment_very_satisfied",
+    "cake", "icecream", "local_pizza", "fastfood", "local_cafe", "emoji_food_beverage", "cookie",
+    "rice_bowl", "soup_kitchen", "egg", "egg_alt", "tapas", "liquor", "wine_bar"
   ];
 
   // Form state
