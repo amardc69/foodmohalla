@@ -224,7 +224,7 @@ export default function CheckoutPage() {
     await clearCart({ userId });
     
     setTimeout(() => {
-      router.push(`/orders`);
+      router.push(`/tracking?order=${orderId}`);
     }, 1000);
   }
 
@@ -297,11 +297,11 @@ export default function CheckoutPage() {
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-xs text-text-muted mb-1 font-medium">Flat / House No.</label>
+                      <label className="block text-xs text-text-muted mb-1 font-medium">Flat / House / Building No.</label>
                       <input 
                         type="text" 
                         className="w-full p-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:ring-primary focus:border-primary" 
-                        placeholder="e.g. Flat 402"
+                        placeholder="e.g. Flat 402, Building A"
                         value={newFlat}
                         onChange={(e) => setNewFlat(e.target.value)}
                       />

@@ -409,7 +409,12 @@ export default function AdminDashboard() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <p className="text-sm text-text-muted max-w-[200px] truncate">{order.itemsSummary}</p>
+                      <div className="flex flex-col gap-1">
+                        <p className="text-sm text-text-muted max-w-[200px] truncate">{order.itemsSummary}</p>
+                        {order.items.some((i: any) => (i.addons && i.addons.length > 0) || (i.instructions && i.instructions.length > 0)) && (
+                          <span className="text-[10px] font-bold bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded w-fit">Has Customizations</span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4">
                       {(() => {
@@ -502,12 +507,37 @@ export default function AdminDashboard() {
                 <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Order Items</h4>
                 <div className="space-y-1.5">
                   {selectedOrder.items.map((item: any, idx: number) => (
-                    <div key={idx} className="flex items-center justify-between text-sm bg-muted/50 rounded-md px-3 py-2">
-                      <div className="flex items-center gap-2">
-                        <span className="w-6 h-6 rounded bg-primary/10 text-primary flex items-center justify-center font-bold text-xs">{item.quantity}x</span>
-                        <span className="font-medium">{item.name}</span>
+                    <div key={idx} className="flex flex-col bg-muted/50 rounded-md px-3 py-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <div className="flex items-center gap-2">
+                          <span className="w-6 h-6 rounded bg-primary/10 text-primary flex items-center justify-center font-bold text-xs">{item.quantity}x</span>
+                          <span className="font-medium">{item.name}</span>
+                        </div>
+                        <span className="text-muted-foreground">₹{((item.price + (item.addons?.reduce((sum: number, a: any) => sum + (a.price || 0), 0) || 0)) * item.quantity).toFixed(2)}</span>
                       </div>
-                      <span className="text-muted-foreground">₹{(item.price * item.quantity).toFixed(2)}</span>
+                      
+                      {/* Addons */}
+                      {item.addons && item.addons.length > 0 && (
+                        <div className="ml-10 mt-1 flex flex-col gap-0.5">
+                          {item.addons.map((a: any, i: number) => (
+                            <div key={i} className="flex items-center justify-between text-xs text-muted-foreground">
+                              <span>+ {a.name}</span>
+                              <span>₹{(a.price || 0).toFixed(2)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      
+                      {/* Instructions */}
+                      {item.instructions && item.instructions.length > 0 && (
+                        <div className="ml-10 mt-1.5 flex flex-wrap gap-1">
+                          {item.instructions.map((inst: string, i: number) => (
+                            <span key={i} className="text-[10px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded border border-amber-200">
+                              {inst.replace("Custom: ", "")}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -537,7 +567,7 @@ export default function AdminDashboard() {
                   <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Delivery Address</h4>
                   <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 dark:bg-blue-950/20 dark:border-blue-900">
                     <p className="text-sm text-blue-900 dark:text-blue-100 leading-relaxed">
-                      {selectedOrder.deliveryFlat ? `${selectedOrder.deliveryFlat}, ` : ""}
+                      {selectedOrder.deliveryFlat ? <span className="font-semibold">Flat/Bldg: {selectedOrder.deliveryFlat}, </span> : ""}
                       {selectedOrder.deliveryAddress}
                     </p>
                     {selectedOrder.deliveryLandmark && (

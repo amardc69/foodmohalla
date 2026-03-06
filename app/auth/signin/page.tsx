@@ -22,6 +22,7 @@ function SignInForm() {
   const [countryCode, setCountryCode] = useState("+91");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
   const router = useRouter();
   const { data: session, status } = useSession();
   const searchParams = useSearchParams();
@@ -72,6 +73,7 @@ function SignInForm() {
     const res = await loginPromise;
 
     if (res?.error) {
+      setErrorMsg("Invalid username or password. Please try again.");
       setLoading(false);
     } else {
       // Small delay to let the JWT cookie propagate, then check role
@@ -134,6 +136,8 @@ function SignInForm() {
 
     if (!res?.error) {
       router.push(customerRedirect);
+    } else {
+      setErrorMsg("Registration failed. Please check your details or try a different username.");
     }
   };
 
@@ -181,8 +185,18 @@ function SignInForm() {
 
           <form
             className="space-y-4"
-            onSubmit={mode === "login" ? handleLogin : handleRegister}
+            onSubmit={
+              mode === "login" 
+              ? (e) => { setErrorMsg(""); handleLogin(e); } 
+              : (e) => { setErrorMsg(""); handleRegister(e); }
+            }
           >
+            {errorMsg && (
+              <div className="bg-red-50 border border-red-200 text-red-600 text-sm font-medium rounded-xl p-3 flex items-start gap-2 mb-4 animate-in fade-in slide-in-from-top-1">
+                <span className="material-symbols-outlined !text-[20px] shrink-0">error</span>
+                <p className="mt-0.5 leading-snug">{errorMsg}</p>
+              </div>
+            )}
 
             {/* Name — only on register */}
             {mode === "register" && (

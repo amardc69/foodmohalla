@@ -93,6 +93,13 @@ export default defineSchema({
     instructions: v.optional(v.array(v.string())),
   }).index("by_user", ["userId"]),
 
+  favourites: defineTable({
+    userId: v.string(),
+    menuItemId: v.string(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_and_item", ["userId", "menuItemId"]),
+
   users: defineTable({
     name: v.string(),
     username: v.string(),

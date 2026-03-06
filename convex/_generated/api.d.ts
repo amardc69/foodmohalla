@@ -12,6 +12,7 @@ import type * as addresses from "../addresses.js";
 import type * as adminSettings from "../adminSettings.js";
 import type * as cart from "../cart.js";
 import type * as categories from "../categories.js";
+import type * as favourites from "../favourites.js";
 import type * as init from "../init.js";
 import type * as menu from "../menu.js";
 import type * as offers from "../offers.js";
@@ -29,6 +30,7 @@ declare const fullApi: ApiFromModules<{
   adminSettings: typeof adminSettings;
   cart: typeof cart;
   categories: typeof categories;
+  favourites: typeof favourites;
   init: typeof init;
   menu: typeof menu;
   offers: typeof offers;

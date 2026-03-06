@@ -128,3 +128,42 @@ export const clearCart = mutation({
     }
   },
 });
+
+export const migrateCart = mutation({
+  args: { guestId: v.string(), userId: v.string() },
+  handler: async (ctx, args) => {
+    if (args.guestId === args.userId) return;
+    
+    // Get all guest cart items
+    const guestItems = await ctx.db
+      .query("carts")
+      .withIndex("by_user", (q) => q.eq("userId", args.guestId))
+      .collect();
+      
+    if (guestItems.length === 0) return;
+    
+    for (const guestItem of guestItems) {
+      const existingUserItems = await ctx.db
+        .query("carts")
+        .withIndex("by_user", (q) => q.eq("userId", args.userId))
+        .filter((q) => q.eq(q.field("menuItemId"), guestItem.menuItemId))
+        .collect();
+        
+      const matchingUserItem = existingUserItems.find(
+        (i) => JSON.stringify(i.addons || []) === JSON.stringify(guestItem.addons || []) &&
+               JSON.stringify(i.instructions || []) === JSON.stringify(guestItem.instructions || [])
+      );
+      
+      if (matchingUserItem) {
+        // Add quantity and delete guest item
+        await ctx.db.patch(matchingUserItem._id, {
+          quantity: matchingUserItem.quantity + guestItem.quantity
+        });
+        await ctx.db.delete(guestItem._id);
+      } else {
+        // Just change the userId of the guest item
+        await ctx.db.patch(guestItem._id, { userId: args.userId });
+      }
+    }
+  }
+});

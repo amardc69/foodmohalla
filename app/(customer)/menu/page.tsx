@@ -27,13 +27,12 @@ const categoryIcons: Record<string, string> = {
   desi: "restaurant",
 };
 
-const addons = [
+const defaultInstructions = ["No Onions", "No Mayo", "Less Spicy", "Extra Spicy", "No Garlic"];
+const defaultAddonsFallback = [
   { name: "Extra Cheese Slice", price: 1.5 },
   { name: "Extra Paneer Patty", price: 3.0 },
   { name: "Peri Peri Sprinkles", price: 0.5 },
 ];
-
-const instructions = ["No Onions", "No Mayo", "Less Spicy"];
 
 function MenuContent() {
   const searchParams = useSearchParams();
@@ -97,8 +96,9 @@ function MenuContent() {
     if (!selectedItemForSheet || !userId) return;
     setAddingToCart(selectedItemForSheet.id);
     
+    const itemAddons = selectedItemForSheet.addons || [];
     const enrichedAddons = selectedAddons.map(name => {
-      const addon = addons.find(a => a.name === name);
+      const addon = itemAddons.find((a: any) => a.name === name);
       return { name, price: addon?.price || 0 };
     });
 
@@ -341,160 +341,234 @@ function MenuContent() {
       </main>
 
       <Drawer open={!!selectedItemForSheet} onOpenChange={(open) => !open && setSelectedItemForSheet(null)}>
-        <DrawerContent className="max-h-[96vh]">
-          {selectedItemForSheet && (
-            <div className="flex flex-col h-full max-h-full overflow-hidden">
-              <div className="overflow-y-auto px-4 sm:px-6 hide-scrollbar">
-                <DrawerHeader className="text-left mb-6 px-0 pt-6">
-                  <DrawerTitle className="text-2xl font-bold text-slate-900">{selectedItemForSheet.name}</DrawerTitle>
-                  <DrawerDescription className="text-slate-500">
-                    {selectedItemForSheet.description}
-                  </DrawerDescription>
-                </DrawerHeader>
+        <DrawerContent className="max-h-[92vh] flex flex-col">
+          {selectedItemForSheet && (() => {
+            const itemAddons = selectedItemForSheet.addons?.length ? selectedItemForSheet.addons : defaultAddonsFallback;
+            const addonTotal = selectedAddons.reduce((sum: number, name: string) => {
+              const addon = itemAddons.find((a: any) => a.name === name);
+              return sum + (addon?.price || 0);
+            }, 0);
+            const unitPrice = selectedItemForSheet.price + addonTotal;
+            const totalPrice = unitPrice * sheetQuantity;
 
-              <div className="flex-1 space-y-8">
-                {/* Add-ons */}
-                <div>
-                  <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
-                    Choice of Add-ons
-                    <span className="text-xs font-normal text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
-                      Optional
-                    </span>
-                  </h3>
-                  <div className="space-y-3">
-                    {addons.map((addon) => (
-                      <label
-                        key={addon.name}
-                        className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer hover:border-primary transition-colors bg-white ${
-                          selectedAddons.includes(addon.name)
-                            ? "border-primary bg-primary/5"
-                            : "border-slate-200"
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <input
-                            className="size-5 rounded border-gray-300 text-primary focus:ring-primary bg-transparent"
-                            type="checkbox"
-                            checked={selectedAddons.includes(addon.name)}
-                            onChange={() => toggleAddon(addon.name)}
-                          />
-                          <span className="text-sm font-medium">{addon.name}</span>
+            return (
+            <>
+              <DrawerHeader className="sr-only">
+                <DrawerTitle>{selectedItemForSheet.name}</DrawerTitle>
+                <DrawerDescription>{selectedItemForSheet.description}</DrawerDescription>
+              </DrawerHeader>
+              <div className="flex-1 overflow-y-auto hide-scrollbar">
+                {/* 3-column grid on desktop, stacked on mobile */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-0 lg:gap-8 px-4 sm:px-6 pt-4 pb-6">
+
+                  {/* ─── COLUMN 1: Details, Small Image, Addons, Instructions ── */}
+                  <div className="lg:col-span-1 space-y-6">
+                    {/* Header: Info + Small Image */}
+                    <div className="flex justify-between items-start gap-4">
+                      <div className="flex-1">
+                        <h2 className="text-xl lg:text-2xl font-bold text-slate-900 mb-1">{selectedItemForSheet.name}</h2>
+                        <div className="flex items-center gap-3 mb-2">
+                          <span className="text-xl font-black text-primary">₹{selectedItemForSheet.price.toFixed(2)}</span>
+                          {selectedItemForSheet.rating && (
+                            <span className="flex items-center gap-1 bg-green-50 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                              <span className="material-symbols-outlined text-[12px]">star</span>
+                              {selectedItemForSheet.rating}
+                            </span>
+                          )}
                         </div>
-                        <span className="text-sm text-slate-500">
-                          +₹{addon.price.toFixed(2)}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Instructions */}
-                <div>
-                  <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
-                    Special Instructions
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {instructions.map((inst) => (
-                      <label key={inst} className="cursor-pointer">
-                        <input
-                          className="peer sr-only"
-                          type="checkbox"
-                          checked={selectedInstructions.includes(inst)}
-                          onChange={() => toggleInstruction(inst)}
+                        <p className="text-slate-500 text-xs lg:text-sm leading-relaxed">{selectedItemForSheet.description}</p>
+                      </div>
+                      
+                      {/* Small Image */}
+                      <div className="relative w-24 h-24 lg:w-28 lg:h-28 shrink-0 rounded-xl overflow-hidden bg-slate-100 shadow-sm border border-slate-100">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          alt={selectedItemForSheet.name}
+                          src={selectedItemForSheet.image}
+                          className="w-full h-full object-cover"
                         />
-                        <span className="px-4 py-2 rounded-full border border-slate-200 bg-white text-sm text-slate-500 peer-checked:bg-primary peer-checked:text-white peer-checked:border-primary transition-all select-none">
-                          {inst}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
+                        {selectedItemForSheet.isVeg && (
+                          <div className="absolute top-1.5 left-1.5 bg-green-600 border border-white text-white text-[8px] font-bold px-1.5 py-0.5 rounded-sm shadow-sm">
+                            VEG
+                          </div>
+                        )}
+                      </div>
+                    </div>
 
-                {/* Frequently Bought Together */}
-                {relatedItems.length > 0 && (
-                  <div>
-                    <h3 className="text-lg font-bold mb-4">Frequently Bought Together</h3>
-                    <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar snap-x">
-                      {relatedItems.map((related: any) => (
-                        <Link
-                          key={related.id}
-                          href={`/menu/${related.id}`}
-                          className="snap-start shrink-0 w-40 bg-white rounded-xl border border-slate-200 p-2 flex flex-col hover:shadow-md transition-shadow"
-                        >
-                          <div className="w-full h-24 rounded-lg overflow-hidden mb-2 bg-slate-100">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              className="w-full h-full object-cover"
-                              alt={related.name}
-                              src={related.image}
+                    <hr className="border-slate-100" />
+
+                    {/* Addons from Convex */}
+                    {itemAddons.length > 0 && (
+                      <div>
+                        <h3 className="font-bold text-sm lg:text-base mb-3 flex items-center gap-2">
+                          Choice of Add-ons
+                          <span className="text-[10px] font-normal text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">Optional</span>
+                        </h3>
+                        <div className="space-y-2">
+                          {itemAddons.map((addon: any) => (
+                            <label
+                              key={addon.name}
+                              className={`flex items-center justify-between p-2.5 rounded-xl border cursor-pointer hover:border-primary/50 transition-colors bg-white ${
+                                selectedAddons.includes(addon.name) ? "border-primary bg-primary/5 shadow-sm" : "border-slate-200"
+                              }`}
+                            >
+                              <div className="flex items-center gap-3">
+                                <input
+                                  className="size-4 rounded border-gray-300 text-primary focus:ring-primary bg-transparent"
+                                  type="checkbox"
+                                  checked={selectedAddons.includes(addon.name)}
+                                  onChange={() => toggleAddon(addon.name)}
+                                />
+                                <span className="text-xs lg:text-sm font-medium">{addon.name}</span>
+                              </div>
+                              <span className="text-xs lg:text-sm font-semibold text-slate-500">+₹{addon.price.toFixed(2)}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Instructions */}
+                    <div>
+                      <h3 className="font-bold text-sm lg:text-base mb-3">Special Instructions</h3>
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        {defaultInstructions.map((inst) => (
+                          <label key={inst} className="cursor-pointer">
+                            <input
+                              className="peer sr-only"
+                              type="checkbox"
+                              checked={selectedInstructions.includes(inst)}
+                              onChange={() => toggleInstruction(inst)}
                             />
-                          </div>
-                          <h4 className="font-bold text-[13px] mb-1 truncate">
-                            {related.name}
-                          </h4>
-                          <div className="flex items-center justify-between mt-auto">
-                            <span className="text-xs font-semibold text-slate-500">
-                              ₹{related.price.toFixed(2)}
+                            <span className="px-3 py-1.5 rounded-full border border-slate-200 bg-white text-xs text-slate-500 peer-checked:bg-primary peer-checked:text-white peer-checked:border-primary transition-all select-none">
+                              {inst}
                             </span>
-                            <span className="size-6 flex items-center justify-center bg-slate-100 rounded-md hover:bg-primary hover:text-white transition-colors gap-0.5"
-                                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); openAddSheet(related); }} >
-                              <span className="material-symbols-outlined text-[14px]">
-                                add
-                              </span>
-                            </span>
-                          </div>
-                        </Link>
-                      ))}
+                          </label>
+                        ))}
+                      </div>
+                      <textarea
+                        placeholder="E.g. Make it extra crispy, allergy to peanuts..."
+                        className="w-full text-xs lg:text-sm p-3 border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all resize-none h-20"
+                        value={selectedInstructions.find(i => i.startsWith("Custom: "))?.replace("Custom: ", "") || ""}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setSelectedInstructions(prev => {
+                            const filtered = prev.filter(i => !i.startsWith("Custom: "));
+                            return val.trim() ? [...filtered, `Custom: ${val}`] : filtered;
+                          });
+                        }}
+                      ></textarea>
                     </div>
                   </div>
-                )}
-              </div>
 
-              {/* Footer / Cart Action */}
-              <div className="pt-6 mt-6 border-t border-slate-200 px-0 pb-8 flex flex-col sm:flex-row gap-4 sm:items-center justify-between sticky bottom-0 bg-white z-10">
-                <div className="flex items-center justify-between bg-white border border-slate-200 rounded-xl px-4 py-2 w-full sm:w-32">
-                  <button
-                    onClick={() => setSheetQuantity(Math.max(1, sheetQuantity - 1))}
-                    className="size-8 sm:size-6 flex items-center justify-center rounded-md hover:bg-slate-100 text-slate-600 transition-colors"
-                  >
-                    <span className="material-symbols-outlined text-[20px] sm:text-[18px]">remove</span>
-                  </button>
-                  <span className="font-bold text-lg sm:text-sm w-4 text-center">{sheetQuantity}</span>
-                  <button
-                    onClick={() => setSheetQuantity(sheetQuantity + 1)}
-                    className="size-8 sm:size-6 flex items-center justify-center rounded-md hover:bg-slate-100 text-slate-600 transition-colors"
-                  >
-                    <span className="material-symbols-outlined text-[20px] sm:text-[18px]">add</span>
-                  </button>
+                  {/* ─── COLUMN 2: Frequently Bought Together (Medium Size) ── */}
+                  <div className="lg:col-span-1 mt-8 lg:mt-0">
+                    <h3 className="font-bold text-sm lg:text-base mb-4 lg:mb-6 pl-1 border-l-4 border-primary/40 text-slate-800">Complete Your Meal</h3>
+                    {relatedItems.length > 0 ? (
+                      <div className="grid grid-cols-2 lg:grid-cols-1 gap-3 lg:gap-4">
+                        {relatedItems.map((related: any) => (
+                          <div
+                            key={related.id}
+                            className="flex flex-col lg:flex-row items-center gap-3 bg-white rounded-2xl border border-slate-200 p-2.5 hover:shadow-md hover:border-primary/30 transition-all cursor-pointer group"
+                            onClick={() => openAddSheet(related)}
+                          >
+                            <div className="w-full lg:w-20 h-28 lg:h-20 rounded-xl overflow-hidden bg-slate-100 shrink-0 relative">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt={related.name} src={related.image} />
+                            </div>
+                            <div className="flex-1 min-w-0 flex flex-col justify-center text-center lg:text-left w-full">
+                              <h4 className="font-bold text-xs lg:text-sm truncate mb-0.5 text-slate-800">{related.name}</h4>
+                              <span className="text-xs font-black text-primary mb-2 lg:mb-0">₹{related.price.toFixed(2)}</span>
+                              
+                              <button
+                                className="mt-auto lg:hidden w-full py-1.5 flex items-center justify-center bg-slate-100 text-slate-700 text-xs font-bold rounded-lg hover:bg-primary hover:text-white transition-colors"
+                                onClick={(e) => { e.stopPropagation(); openAddSheet(related); }}
+                              >
+                                Add
+                              </button>
+                            </div>
+                            <button
+                              className="hidden lg:flex size-8 items-center justify-center bg-slate-100 text-slate-500 rounded-full hover:bg-primary hover:text-white transition-colors shrink-0 group-hover:shadow-sm"
+                              onClick={(e) => { e.stopPropagation(); openAddSheet(related); }}
+                            >
+                              <span className="material-symbols-outlined text-[18px]">add</span>
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center h-40 bg-slate-50 rounded-2xl border border-dashed border-slate-200 text-slate-400">
+                        <span className="material-symbols-outlined text-3xl mb-2 opacity-50">fastfood</span>
+                        <p className="text-xs font-medium">No related items</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* ─── COLUMN 3: Order Summary Only ─────────── */}
+                  <div className="lg:col-span-1 mt-8 lg:mt-0">
+                    {/* Order summary card */}
+                    <div className="bg-slate-50 rounded-2xl p-5 lg:p-6 border border-slate-200 shadow-inner">
+                      <h3 className="font-bold text-base mb-5 flex items-center gap-2 text-slate-800">
+                        <span className="material-symbols-outlined text-primary text-[22px]">receipt_long</span>
+                        Order Summary
+                      </h3>
+                      <div className="space-y-4">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-slate-600 font-medium">{selectedItemForSheet.name}</span>
+                          <span className="font-bold text-slate-800">₹{selectedItemForSheet.price.toFixed(2)}</span>
+                        </div>
+                        {selectedAddons.length > 0 && (
+                          <div className="flex justify-between text-sm bg-white p-2 rounded-lg border border-slate-100">
+                            <span className="text-slate-500 text-xs">Add-ons ({selectedAddons.length})</span>
+                            <span className="font-bold text-primary text-xs">+₹{addonTotal.toFixed(2)}</span>
+                          </div>
+                        )}
+                        
+                        <div className="border-t border-slate-200 pt-4 mt-2">
+                          <div className="flex justify-between items-center bg-white p-1.5 rounded-xl border border-slate-200 shadow-sm w-fit mx-auto lg:mx-0 lg:w-full mb-4">
+                            <button
+                              onClick={() => setSheetQuantity(Math.max(1, sheetQuantity - 1))}
+                              className="size-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-600 transition-colors"
+                            >
+                              <span className="material-symbols-outlined text-[18px]">remove</span>
+                            </button>
+                            <span className="font-bold text-base w-10 text-center text-slate-800">{sheetQuantity}</span>
+                            <button
+                              onClick={() => setSheetQuantity(sheetQuantity + 1)}
+                              className="size-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-600 transition-colors"
+                            >
+                              <span className="material-symbols-outlined text-[18px]">add</span>
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="border-t border-dashed border-slate-300 pt-4 mt-2">
+                          <div className="flex justify-between items-end">
+                            <span className="font-bold text-base text-slate-800">Total</span>
+                            <span className="font-black text-2xl text-primary leading-none">₹{totalPrice.toFixed(2)}</span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <button
+                        onClick={handleSheetAddToCart}
+                        disabled={addingToCart === selectedItemForSheet.id}
+                        className={`w-full mt-6 font-bold text-base py-3.5 rounded-xl shadow-lg flex items-center justify-center gap-2 transition-transform active:scale-[0.98] ${
+                          addingToCart === selectedItemForSheet.id
+                            ? "bg-green-500 text-white shadow-green-500/30"
+                            : "bg-primary hover:bg-orange-600 text-white shadow-orange-500/30"
+                        }`}
+                      >
+                        <span className="material-symbols-outlined text-[20px]">{addingToCart === selectedItemForSheet.id ? "check_circle" : "shopping_cart"}</span>
+                        <span>{addingToCart === selectedItemForSheet.id ? "Added to Cart" : "Add to Cart"}</span>
+                      </button>
+                    </div>
+                  </div>
                 </div>
-                {(() => {
-                  const addonTotal = selectedAddons.reduce((sum, name) => {
-                    const addon = addons.find((a) => a.name === name);
-                    return sum + (addon?.price || 0);
-                  }, 0);
-                  const totalPrice = (selectedItemForSheet.price + addonTotal) * sheetQuantity;
-
-                  return (
-                    <button
-                      onClick={handleSheetAddToCart}
-                      disabled={addingToCart === selectedItemForSheet.id}
-                      className={`w-full sm:flex-1 font-bold text-lg py-3 rounded-xl shadow-lg flex items-center justify-center gap-3 transition-transform active:scale-[0.98] ${
-                        addingToCart === selectedItemForSheet.id
-                          ? "bg-green-500 text-white shadow-green-500/30"
-                          : "bg-primary hover:bg-orange-600 text-white shadow-orange-500/30"
-                      }`}
-                    >
-                      <span>{addingToCart === selectedItemForSheet.id ? "Added!" : "Add to Cart"}</span>
-                      <span className="bg-white/20 px-2 py-0.5 rounded text-sm font-semibold">
-                        ₹{totalPrice.toFixed(2)}
-                      </span>
-                    </button>
-                  );
-                })()}
               </div>
-              </div>
-            </div>
-          )}
+            </>
+            );
+          })()}
         </DrawerContent>
       </Drawer>
     </div>
