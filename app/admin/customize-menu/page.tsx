@@ -410,21 +410,23 @@ export default function CustomizeMenuPage() {
                 <span className="text-sm font-bold">{cat.name}</span>
               </button>
               
-              <div className="flex border-l border-gray-100 items-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <button
-                  onClick={(e) => handleEditCategoryClick(cat, e)}
-                  title="Edit Category"
-                  className="px-2 py-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 transition-colors"
-                >
-                  <span className="material-symbols-outlined text-[16px]">edit</span>
-                </button>
-                <button
-                  onClick={(e) => handleDeleteCategory(cat._id, e)}
-                  title="Delete Category"
-                  className="px-2 py-2 text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors border-l border-gray-100"
-                >
-                  <span className="material-symbols-outlined text-[16px]">close</span>
-                </button>
+              <div className="max-w-0 opacity-0 overflow-hidden group-hover:max-w-[100px] group-hover:opacity-100 transition-all duration-300 ease-in-out flex items-center">
+                <div className="flex border-l border-gray-100">
+                  <button
+                    onClick={(e) => handleEditCategoryClick(cat, e)}
+                    title="Edit Category"
+                    className="px-2 py-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 transition-colors shrink-0 flex items-center justify-center"
+                  >
+                    <span className="material-symbols-outlined text-[16px] block">edit</span>
+                  </button>
+                  <button
+                    onClick={(e) => handleDeleteCategory(cat._id, e)}
+                    title="Delete Category"
+                    className="px-2 py-2 text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors border-l border-gray-100 shrink-0 flex items-center justify-center"
+                  >
+                    <span className="material-symbols-outlined text-[16px] block">close</span>
+                  </button>
+                </div>
               </div>
             </div>
           ))}
