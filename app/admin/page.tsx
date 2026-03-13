@@ -188,7 +188,18 @@ export default function AdminDashboard() {
   const soundPref = adminSettings.notificationSound;
   const notifSound = soundPref ?? "ting";
 
-  // Detect new orders
+  // Wake Lock & Notifications State
+  const [wakeLockEnabled, setWakeLockEnabled] = useState(false);
+  const wakeLockRef = useRef<any>(null); // WakeLockSentinel
+
+  // Request Notification Permissions
+  useEffect(() => {
+    if ("Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
+  }, []);
+
+  // Detect new orders & Notify
   useEffect(() => {
     if (!data) return;
     const currentIds = new Set(data.orders.map((o: any) => o._id));
@@ -208,10 +219,60 @@ export default function AdminDashboard() {
       setShowNewOrderDialog(true);
       if (notifSound === "dong") playDong();
       else playTing();
+
+      // Trigger desktop notification
+      if ("Notification" in window && Notification.permission === "granted") {
+        new Notification("New Order Received!", {
+          body: `You have ${newOrders.length} new order(s) waiting for acceptance.`,
+        });
+      }
     }
 
     knownOrderIds.current = currentIds;
   }, [data, notifSound]);
+
+  // Wake lock toggle logic
+  const toggleWakeLock = async () => {
+    if (!("wakeLock" in navigator)) {
+      alert("Screen Wake Lock API not supported in this browser.");
+      return;
+    }
+
+    try {
+      if (wakeLockEnabled && wakeLockRef.current) {
+        await wakeLockRef.current.release();
+        wakeLockRef.current = null;
+        setWakeLockEnabled(false);
+      } else {
+        const lock = await (navigator as any).wakeLock.request("screen");
+        wakeLockRef.current = lock;
+        setWakeLockEnabled(true);
+        
+        lock.addEventListener('release', () => {
+          if (document.visibilityState === 'visible') {
+             setWakeLockEnabled(false);
+          }
+        });
+      }
+    } catch (err: any) {
+      alert(`Failed to acquire wake lock: ${err.name}, ${err.message}`);
+    }
+  };
+
+  // Re-acquire wake lock on visibility change if it SHOULD be enabled
+  useEffect(() => {
+    const handleVisibilityChange = async () => {
+      if (wakeLockEnabled && document.visibilityState === "visible" && wakeLockRef.current === null) {
+        try {
+           wakeLockRef.current = await (navigator as any).wakeLock.request("screen");
+        } catch (err) {
+           console.error("Could not re-acquire wake lock", err);
+        }
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, [wakeLockEnabled]);
 
   const currentNewOrder = newOrderQueue[0];
 
@@ -296,6 +357,21 @@ export default function AdminDashboard() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <button
+            onClick={toggleWakeLock}
+            className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-bold border transition-colors ${
+              wakeLockEnabled 
+                ? "bg-amber-50 text-amber-700 border-amber-200 shadow-sm"
+                : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"
+            }`}
+            title={wakeLockEnabled ? "Screen Wake Lock Active" : "Click to keep screen awake"}
+          >
+            <span className="material-symbols-outlined text-[18px]">
+              {wakeLockEnabled ? "lightbulb" : "lightbulb_outline"}
+            </span>
+            {wakeLockEnabled ? "Awake" : "Allow Sleep"}
+          </button>
+          
           <div className="relative">
             <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
               <span className="material-symbols-outlined text-[20px]">search</span>

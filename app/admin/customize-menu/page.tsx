@@ -34,6 +34,10 @@ export default function CustomizeMenuPage() {
   const [selectedCategoryImage, setSelectedCategoryImage] = useState<File | null>(null);
   const [categoryUploading, setCategoryUploading] = useState(false);
 
+  // Filter state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+
   const ICONS_LIST = [
     // Meals & Fast Food
     "restaurant_menu", "lunch_dining", "local_pizza", "tapas", "burger", "fastfood", "set_meal",
@@ -357,9 +361,27 @@ export default function CustomizeMenuPage() {
     }
   };
 
-  const filteredMenuItems = activeCategoryFilter 
-    ? menuItems.filter(item => item.category === activeCategoryFilter)
-    : menuItems;
+  const filteredMenuItems = menuItems.filter((item: any) => {
+    // 1. Category Filter
+    if (activeCategoryFilter && item.category !== activeCategoryFilter) return false;
+    
+    // 2. Search Filter
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      const nameMatch = item.name.toLowerCase().includes(q);
+      const descMatch = item.description?.toLowerCase().includes(q);
+      if (!nameMatch && !descMatch) return false;
+    }
+    
+    // 3. Status Filter
+    if (statusFilter === "veg" && !item.isVeg) return false;
+    if (statusFilter === "nonveg" && item.isVeg) return false;
+    if (statusFilter === "bestseller" && !item.isBestSeller) return false;
+    if (statusFilter === "featured" && !item.isFeatured) return false;
+    if (statusFilter === "outofstock" && !item.isOutOfStock) return false;
+    
+    return true;
+  });
 
   return (
     <div className="max-w-7xl mx-auto space-y-8 relative">
@@ -522,6 +544,35 @@ export default function CustomizeMenuPage() {
               New Category
           </button>
         </div>
+      </div>
+
+      {/* Items Filtering UI */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="relative w-full sm:w-80">
+          <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+            <span className="material-symbols-outlined text-[20px]">search</span>
+          </span>
+          <input
+            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-primary outline-none shadow-sm transition-shadow"
+            placeholder="Search items by name or description..."
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+        
+        <select
+          className="w-full sm:w-auto px-4 py-2 border border-gray-200 rounded-xl bg-white text-sm focus:ring-2 focus:ring-primary outline-none shadow-sm font-semibold text-gray-700 cursor-pointer"
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+        >
+          <option value="all">All Items</option>
+          <option value="veg">Veg Only</option>
+          <option value="nonveg">Non-Veg Only</option>
+          <option value="bestseller">Best Sellers</option>
+          <option value="featured">Featured</option>
+          <option value="outofstock">Out of Stock</option>
+        </select>
       </div>
 
       {/* Items Grid */}
