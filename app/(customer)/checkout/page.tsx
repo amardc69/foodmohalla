@@ -31,6 +31,8 @@ export default function CheckoutPage() {
   const createOrder = useMutation(api.orders.createOrder);
 
   const authUserId = (session?.user as any)?.id;
+  const dbUser = useQuery(api.users.currentUser, authUserId ? { authProviderId: authUserId } : "skip");
+  
   const addressesDb = useQuery(api.addresses.getAddresses, authUserId ? { userId: authUserId } : "skip") || [];
   const selectAddressMutation = useMutation(api.addresses.selectAddress);
   
@@ -207,6 +209,7 @@ export default function CheckoutPage() {
       name: c.menuItem.name,
       quantity: c.quantity,
       price: c.menuItem.price,
+      selectedSize: c.selectedSize,
       addons: c.addons || [],
       instructions: c.instructions || [],
     }));
@@ -223,6 +226,7 @@ export default function CheckoutPage() {
       deliveryLng: selectedAddress?.lng,
       deliveryFlat: selectedAddress?.flat,
       deliveryLandmark: selectedAddress?.landmark,
+      customerPhone: dbUser?.phone,
     });
     
     await clearCart({ userId });
@@ -531,7 +535,7 @@ export default function CheckoutPage() {
               <div className="p-5 pt-0 bg-gray-50/50">
                 <button
                   onClick={placeOrder}
-                  disabled={cart.length === 0 || isPlacing}
+                  disabled={cart.length === 0 || isPlacing || !selectedAddress}
                   className="w-full bg-primary hover:bg-primary-dark text-white font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-primary/30 transition-all transform active:scale-[0.98] flex items-center justify-between group disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <div className="flex flex-col items-start leading-none">

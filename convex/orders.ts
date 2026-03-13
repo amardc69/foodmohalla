@@ -267,6 +267,7 @@ export const createOrder = mutation({
         name: v.string(),
         quantity: v.number(),
         price: v.number(),
+        selectedSize: v.optional(v.string()), // Added size
         addons: v.optional(v.array(v.any())),
         instructions: v.optional(v.array(v.string())),
       })
@@ -281,6 +282,7 @@ export const createOrder = mutation({
     deliveryLng: v.optional(v.number()),
     deliveryFlat: v.optional(v.string()),
     deliveryLandmark: v.optional(v.string()),
+    customerPhone: v.optional(v.string()), // Added phone
   },
   handler: async (ctx, args) => {
     // Try to get customer name from the users table
@@ -317,6 +319,7 @@ export const createOrder = mutation({
       deliveryLng: args.deliveryLng,
       deliveryFlat: args.deliveryFlat,
       deliveryLandmark: args.deliveryLandmark,
+      customerPhone: args.customerPhone,
       userId: args.userId,
     });
 

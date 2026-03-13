@@ -63,6 +63,7 @@ export const addToCart = mutation({
     userId: v.string(),
     menuItemId: v.string(),
     quantity: v.number(),
+    selectedSize: v.optional(v.string()), // Added for tracking size in cart
     addons: v.optional(v.array(v.any())),
     instructions: v.optional(v.array(v.string())),
   },
@@ -76,7 +77,7 @@ export const addToCart = mutation({
       
     // Simple deep equality check for addons implies stringify
     const matchingItem = existingItems.find(
-      (i) => JSON.stringify(i.addons || []) === JSON.stringify(args.addons || [])
+      (i) => JSON.stringify(i.addons || []) === JSON.stringify(args.addons || []) && i.selectedSize === args.selectedSize
     );
     
     if (matchingItem) {
@@ -90,6 +91,7 @@ export const addToCart = mutation({
         userId: args.userId,
         menuItemId: args.menuItemId,
         quantity: args.quantity,
+        selectedSize: args.selectedSize,
         addons: args.addons,
         instructions: args.instructions,
       });
@@ -151,7 +153,8 @@ export const migrateCart = mutation({
         
       const matchingUserItem = existingUserItems.find(
         (i) => JSON.stringify(i.addons || []) === JSON.stringify(guestItem.addons || []) &&
-               JSON.stringify(i.instructions || []) === JSON.stringify(guestItem.instructions || [])
+               JSON.stringify(i.instructions || []) === JSON.stringify(guestItem.instructions || []) && 
+               i.selectedSize === guestItem.selectedSize
       );
       
       if (matchingUserItem) {

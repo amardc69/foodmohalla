@@ -13,7 +13,9 @@ export default defineSchema({
     isVeg: v.boolean(),
     isHot: v.optional(v.boolean()),
     badge: v.optional(v.string()),
-    addons: v.optional(v.array(v.object({ name: v.string(), price: v.number() }))),
+    sizes: v.optional(v.array(v.object({ name: v.string(), price: v.number() }))),
+    addons: v.optional(v.any()), // modified to support sizePrices inside the array objects
+
     discount: v.optional(v.number()), // discount percentage or flat value
     isOutOfStock: v.optional(v.boolean()),
     isBestSeller: v.optional(v.boolean()),
@@ -54,6 +56,7 @@ export default defineSchema({
         name: v.string(),
         quantity: v.number(),
         price: v.number(),
+        selectedSize: v.optional(v.string()),
         addons: v.optional(v.array(v.any())),
         instructions: v.optional(v.array(v.string())),
       })
@@ -68,6 +71,7 @@ export default defineSchema({
     deliveryLng: v.optional(v.number()),
     deliveryFlat: v.optional(v.string()),
     deliveryLandmark: v.optional(v.string()),
+    customerPhone: v.optional(v.string()), // added for whatsapp sync
     rejectionReason: v.optional(v.string()),
     userId: v.optional(v.string()),
     adminTime: v.optional(v.number()),
@@ -94,6 +98,7 @@ export default defineSchema({
     userId: v.string(), // Use sessionId for guests or userId for logged in
     menuItemId: v.string(),
     quantity: v.number(),
+    selectedSize: v.optional(v.string()),
     addons: v.optional(v.array(v.any())),
     instructions: v.optional(v.array(v.string())),
   }).index("by_user", ["userId"]),

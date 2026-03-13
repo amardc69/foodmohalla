@@ -87,7 +87,8 @@ export default function CustomizeMenuPage() {
     isBestSeller: false,
     isFeatured: false,
     calories: 0,
-    addons: [] as { name: string; price: number }[],
+    sizes: [] as { name: string; price: number }[],
+    addons: [] as { name: string; price: number, sizePrices?: Record<string, number> }[],
     instructions: [] as string[],
   });
 
@@ -112,6 +113,7 @@ export default function CustomizeMenuPage() {
       isBestSeller: item.isBestSeller || false,
       isFeatured: item.isFeatured || false,
       calories: item.calories || 0,
+      sizes: item.sizes || [],
       addons: item.addons || [],
       instructions: item.instructions || [],
     });
@@ -137,6 +139,7 @@ export default function CustomizeMenuPage() {
       isBestSeller: false,
       isFeatured: false,
       calories: 0,
+      sizes: [],
       addons: [],
       instructions: [],
     });
@@ -199,6 +202,26 @@ export default function CustomizeMenuPage() {
     }
   };
 
+  const addSize = () => {
+    setFormData((prev) => ({
+      ...prev,
+      sizes: [...prev.sizes, { name: "", price: 0 }],
+    }));
+  };
+
+  const updateSize = (index: number, field: "name" | "price", value: string | number) => {
+    const newSizes = [...formData.sizes];
+    newSizes[index] = { ...newSizes[index], [field]: value };
+    setFormData({ ...formData, sizes: newSizes });
+  };
+
+  const removeSize = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      sizes: prev.sizes.filter((_, i) => i !== index),
+    }));
+  };
+
   const addAddon = () => {
     setFormData((prev) => ({
       ...prev,
@@ -206,9 +229,19 @@ export default function CustomizeMenuPage() {
     }));
   };
 
-  const updateAddon = (index: number, field: "name" | "price", value: string | number) => {
+  const updateAddon = (index: number, field: "name" | "price" | "sizePrices", value: string | number | Record<string, number>) => {
     const newAddons = [...formData.addons];
     newAddons[index] = { ...newAddons[index], [field]: value };
+    setFormData({ ...formData, addons: newAddons });
+  };
+
+  const updateAddonSizePrice = (addonIndex: number, sizeName: string, price: number) => {
+    const newAddons = [...formData.addons];
+    const currentSizePrices = newAddons[addonIndex].sizePrices || {};
+    newAddons[addonIndex] = {
+      ...newAddons[addonIndex],
+      sizePrices: { ...currentSizePrices, [sizeName]: price }
+    };
     setFormData({ ...formData, addons: newAddons });
   };
 
@@ -783,6 +816,58 @@ export default function CustomizeMenuPage() {
                 </div>
               </div>
 
+              {/* Sizes section */}
+              <div>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-sm font-bold text-text-main uppercase tracking-wider">Sizes</h3>
+                  <button
+                    type="button"
+                    onClick={addSize}
+                    className="text-xs font-bold text-primary hover:text-orange-600 transition-colors bg-primary/10 px-3 py-1.5 rounded-full flex items-center gap-1"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">add</span> Size
+                  </button>
+                </div>
+                {formData.sizes.length === 0 ? (
+                  <p className="text-sm text-text-muted italic border-2 border-dashed border-gray-200 p-6 rounded-xl text-center">No sizes configured (Standard size will be used).</p>
+                ) : (
+                  <div className="space-y-3">
+                    {formData.sizes.map((size, index) => (
+                      <div key={index} className="flex gap-3 items-center p-2 rounded-lg border border-gray-200 bg-white">
+                        <input
+                          type="text"
+                          placeholder="Size Name (e.g. Small, Medium, Large)"
+                          className="flex-1 p-2 border border-gray-200 rounded focus:ring-2 focus:ring-primary outline-none text-sm"
+                          value={size.name}
+                          onChange={(e) => updateSize(index, "name", e.target.value)}
+                          required
+                        />
+                        <div className="relative w-32">
+                          <span className="absolute left-3 top-2 text-sm text-gray-400">₹</span>
+                          <input
+                            type="number"
+                            placeholder="Price"
+                            min="0"
+                            className="w-full pl-7 p-2 border border-gray-200 rounded focus:ring-2 focus:ring-primary outline-none text-sm"
+                            value={size.price}
+                            onChange={(e) => updateSize(index, "price", parseFloat(e.target.value) || 0)}
+                            required
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeSize(index)}
+                          className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Remove Size"
+                        >
+                          <span className="material-symbols-outlined text-[20px]">close</span>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               <div>
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-sm font-bold text-text-main uppercase tracking-wider">Addons</h3>
@@ -799,35 +884,60 @@ export default function CustomizeMenuPage() {
                 ) : (
                   <div className="space-y-3">
                     {formData.addons.map((addon, index) => (
-                      <div key={index} className="flex gap-3 items-center p-2 rounded-lg border border-gray-200 bg-white">
-                        <input
-                          type="text"
-                          placeholder="Addon Name (e.g. Extra Cheese)"
-                          className="flex-1 p-2 border border-gray-200 rounded focus:ring-2 focus:ring-primary outline-none text-sm"
-                          value={addon.name}
-                          onChange={(e) => updateAddon(index, "name", e.target.value)}
-                          required
-                        />
-                        <div className="relative w-32">
-                          <span className="absolute left-3 top-2 text-sm text-gray-400">₹</span>
+                      <div key={index} className="flex flex-col gap-3 p-3 rounded-lg border border-gray-200 bg-white">
+                        <div className="flex gap-3 items-center">
                           <input
-                            type="number"
-                            placeholder="Price"
-                            min="0"
-                            className="w-full pl-7 p-2 border border-gray-200 rounded focus:ring-2 focus:ring-primary outline-none text-sm"
-                            value={addon.price}
-                            onChange={(e) => updateAddon(index, "price", parseFloat(e.target.value) || 0)}
+                            type="text"
+                            placeholder="Addon Name (e.g. Extra Cheese)"
+                            className="flex-1 p-2 border border-gray-200 rounded focus:ring-2 focus:ring-primary outline-none text-sm"
+                            value={addon.name}
+                            onChange={(e) => updateAddon(index, "name", e.target.value)}
                             required
                           />
+                          {!formData.sizes.length && (
+                            <div className="relative w-32">
+                              <span className="absolute left-3 top-2 text-sm text-gray-400">₹</span>
+                              <input
+                                type="number"
+                                placeholder="Price"
+                                min="0"
+                                className="w-full pl-7 p-2 border border-gray-200 rounded focus:ring-2 focus:ring-primary outline-none text-sm"
+                                value={addon.price}
+                                onChange={(e) => updateAddon(index, "price", parseFloat(e.target.value) || 0)}
+                                required
+                              />
+                            </div>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => removeAddon(index)}
+                            className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Remove Addon"
+                          >
+                            <span className="material-symbols-outlined text-[20px]">close</span>
+                          </button>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => removeAddon(index)}
-                          className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                          title="Remove Addon"
-                        >
-                          <span className="material-symbols-outlined text-[20px]">close</span>
-                        </button>
+                        {formData.sizes.length > 0 && (
+                          <div className="pl-4 border-l-2 border-gray-100 grid grid-cols-2 md:grid-cols-3 gap-2 mt-1">
+                            {formData.sizes.map((s, idx) => (
+                              <div key={idx} className="flex items-center gap-2">
+                                <span className="text-xs font-bold text-gray-500 w-16 truncate">{s.name}</span>
+                                <div className="relative flex-1">
+                                  <span className="absolute left-2 top-[3px] text-xs text-gray-400">₹</span>
+                                  <input
+                                    type="number"
+                                    placeholder="Price"
+                                    min="0"
+                                    className="w-full pl-6 p-1 border border-gray-200 rounded focus:ring-1 focus:ring-primary outline-none text-xs"
+                                    value={addon.sizePrices?.[s.name] || 0}
+                                    onChange={(e) => updateAddonSizePrice(index, s.name, parseFloat(e.target.value) || 0)}
+                                    required
+                                  />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>

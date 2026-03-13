@@ -46,6 +46,7 @@ function MenuContent() {
   );
   const [sheetQuantity, setSheetQuantity] = useState(1);
   const [selectedAddons, setSelectedAddons] = useState<string[]>([]);
+  const [selectedSize, setSelectedSize] = useState<string>("");
   const [selectedInstructions, setSelectedInstructions] = useState<string[]>(
     [],
   );
@@ -107,6 +108,7 @@ function MenuContent() {
     setSelectedItemForSheet(item);
     setSheetQuantity(1);
     setSelectedAddons([]);
+    setSelectedSize(item.sizes && item.sizes.length > 0 ? item.sizes[0].name : "");
     setSelectedInstructions([]);
   }
 
@@ -129,7 +131,12 @@ function MenuContent() {
     const itemAddons = selectedItemForSheet.addons || [];
     const enrichedAddons = selectedAddons.map((name) => {
       const addon = itemAddons.find((a: any) => a.name === name);
-      return { name, price: addon?.price || 0 };
+      // Determine addon price considering sizePrices if a size is selected
+      let addonPrice = addon?.price || 0;
+      if (selectedSize && addon?.sizePrices && addon.sizePrices[selectedSize] !== undefined) {
+        addonPrice = addon.sizePrices[selectedSize];
+      }
+      return { name, price: addonPrice };
     });
 
     try {
@@ -139,6 +146,7 @@ function MenuContent() {
         quantity: sheetQuantity,
         addons: enrichedAddons,
         instructions: selectedInstructions,
+        selectedSize: selectedSize || undefined,
       });
       setSelectedItemForSheet(null);
     } finally {
@@ -420,17 +428,32 @@ function MenuContent() {
         <DrawerContent className="max-h-[92vh] flex flex-col">
           {selectedItemForSheet &&
             (() => {
+              const itemSizes = selectedItemForSheet.sizes || [];
+              const hasSizes = itemSizes.length > 0;
+              
+              // Determine base price
+              let baseItemPrice = selectedItemForSheet.price;
+              if (hasSizes && selectedSize) {
+                const sizeObj = itemSizes.find((s: any) => s.name === selectedSize);
+                if (sizeObj) baseItemPrice = sizeObj.price;
+              }
+
               const itemAddons = selectedItemForSheet.addons?.length
                 ? selectedItemForSheet.addons
                 : defaultAddonsFallback;
+                
               const addonTotal = selectedAddons.reduce(
                 (sum: number, name: string) => {
                   const addon = itemAddons.find((a: any) => a.name === name);
-                  return sum + (addon?.price || 0);
+                  let aPrice = addon?.price || 0;
+                  if (hasSizes && selectedSize && addon?.sizePrices?.[selectedSize] !== undefined) {
+                    aPrice = addon.sizePrices[selectedSize];
+                  }
+                  return sum + aPrice;
                 },
                 0,
               );
-              const unitPrice = selectedItemForSheet.price + addonTotal;
+              const unitPrice = baseItemPrice + addonTotal;
               const totalPrice = unitPrice * sheetQuantity;
 
               return (
@@ -454,7 +477,7 @@ function MenuContent() {
                             </h2>
                             <div className="flex items-center gap-3 mb-2">
                               <span className="text-xl font-black text-primary">
-                                ₹{selectedItemForSheet.price.toFixed(2)}
+                                ₹{baseItemPrice.toFixed(2)}
                               </span>
                               {selectedItemForSheet.rating && (
                                 <span className="flex items-center gap-1 bg-green-50 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
@@ -488,6 +511,36 @@ function MenuContent() {
 
                         <hr className="border-slate-100" />
 
+                        {/* Sizes Output */}
+                        {hasSizes && (
+                          <div>
+                            <h3 className="font-bold text-sm lg:text-base mb-3 flex items-center gap-2">
+                              Choose Size
+                              <span className="text-[10px] font-bold text-white bg-primary px-2 py-0.5 rounded-full shadow-sm">
+                                Required
+                              </span>
+                            </h3>
+                            <div className="flex flex-wrap gap-2">
+                              {itemSizes.map((size: any) => (
+                                <button
+                                  key={size.name}
+                                  onClick={() => setSelectedSize(size.name)}
+                                  className={`px-4 py-2 rounded-xl text-sm font-bold border-2 transition-all ${
+                                    selectedSize === size.name
+                                      ? "border-primary bg-primary/10 text-primary"
+                                      : "border-slate-200 text-slate-600 hover:border-primary/50"
+                                  }`}
+                                >
+                                  {size.name}
+                                  <span className="block text-xs font-normal mt-0.5 opacity-80">
+                                    ₹{size.price.toFixed(2)}
+                                  </span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
                         {/* Addons from Convex */}
                         {itemAddons.length > 0 && (
                           <div>
@@ -507,7 +560,7 @@ function MenuContent() {
                                       : "border-slate-200"
                                   }`}
                                 >
-                                  <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-3">
                                     <input
                                       className="size-4 rounded border-gray-300 text-primary focus:ring-primary bg-transparent"
                                       type="checkbox"
@@ -521,7 +574,11 @@ function MenuContent() {
                                     </span>
                                   </div>
                                   <span className="text-xs lg:text-sm font-semibold text-slate-500">
-                                    +₹{addon.price.toFixed(2)}
+                                    +₹{
+                                      (hasSizes && selectedSize && addon?.sizePrices?.[selectedSize] !== undefined)
+                                        ? addon.sizePrices[selectedSize].toFixed(2)
+                                        : addon.price.toFixed(2)
+                                    }
                                   </span>
                                 </label>
                               ))}

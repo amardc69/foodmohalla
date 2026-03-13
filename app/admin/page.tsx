@@ -144,6 +144,7 @@ function shareOnWhatsApp(order: any) {
   const text = [
     `🛵 *Order ${order.displayId}*`,
     `👤 *Customer:* ${order.customer.name}${order.customerUsername ? ` (@${order.customerUsername})` : ""}`,
+    order.customerPhone ? `📞 *Phone:* ${order.customerPhone}` : "",
     ``,
     `📦 *Items:*`,
     items,
