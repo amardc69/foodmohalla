@@ -8,7 +8,7 @@ export default function CustomerLayout({
 }) {
   return (
     <div className="bg-background-light text-slate-900 font-display min-h-screen flex flex-col">
-      <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden">
+      <div className="relative flex min-h-screen w-full flex-col overflow-x-clip">
         <div className="layout-container flex h-full grow flex-col">
           <CustomerHeader />
           <main className="flex-1">{children}</main>

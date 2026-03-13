@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
+import imageCompression from "browser-image-compression";
 
 export default function CustomizeMenuPage() {
   const menuItems = useQuery(api.menu.getMenuItems, {});
@@ -151,11 +152,18 @@ export default function CustomizeMenuPage() {
     try {
       let storageId = undefined;
       if (selectedFile) {
+        const options = {
+          maxSizeMB: 0.1,
+          maxWidthOrHeight: 800,
+          useWebWorker: true,
+        };
+        const compressedFile = await imageCompression(selectedFile, options);
+        
         const postUrl = await generateUploadUrl();
         const result = await fetch(postUrl, {
           method: "POST",
-          headers: { "Content-Type": selectedFile.type },
-          body: selectedFile,
+          headers: { "Content-Type": compressedFile.type },
+          body: compressedFile,
         });
         const { storageId: uploadedStorageId } = await result.json();
         storageId = uploadedStorageId;
@@ -241,11 +249,18 @@ export default function CustomizeMenuPage() {
       let imageUrl = "";
 
       if (selectedCategoryImage) {
+        const options = {
+          maxSizeMB: 0.1,
+          maxWidthOrHeight: 800,
+          useWebWorker: true,
+        };
+        const compressedFile = await imageCompression(selectedCategoryImage, options);
+        
         const postUrl = await generateUploadUrl();
         const result = await fetch(postUrl, {
           method: "POST",
-          headers: { "Content-Type": selectedCategoryImage.type },
-          body: selectedCategoryImage,
+          headers: { "Content-Type": compressedFile.type },
+          body: compressedFile,
         });
         const { storageId: uploadedStorageId } = await result.json();
         storageId = uploadedStorageId;
