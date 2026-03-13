@@ -59,13 +59,9 @@ function MenuContent() {
 
   const categoriesDb = useQuery(api.categories.getCategories) || [];
 
-  const freeDeliveryEnabled =
-    useQuery(api.adminSettings.getSetting, { key: "freeDeliveryEnabled" }) ===
-    "true";
-  const freeDeliveryThreshold = Number(
-    useQuery(api.adminSettings.getSetting, { key: "freeDeliveryThreshold" }) ||
-      0,
-  );
+  const adminSettings = useQuery(api.adminSettings.getAllSettings) || {};
+  const freeDeliveryEnabled = adminSettings.freeDeliveryEnabled === "true";
+  const freeDeliveryThreshold = Number(adminSettings.freeDeliveryThreshold || 0);
 
   const userFavourites = useQuery(
     api.favourites.getUserFavourites,
@@ -293,22 +289,32 @@ function MenuContent() {
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         alt={item.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        className={`w-full h-full object-cover transition-transform duration-500 ${item.isOutOfStock ? 'grayscale opacity-70' : 'group-hover:scale-105'}`}
                         src={item.image}
                       />
-                      {item.badge && (
-                        <div
-                          className={`absolute top-3 left-3 text-white text-[10px] font-bold px-2 py-1 rounded-md shadow-sm ${
-                            item.badge === "HOT"
-                              ? "bg-red-500"
-                              : item.badge === "VEG"
-                                ? "bg-green-600"
-                                : "bg-primary"
-                          }`}
-                        >
-                          {item.badge}
+                      {item.isOutOfStock && (
+                        <div className="absolute inset-0 bg-white/40 backdrop-blur-[2px] flex items-center justify-center">
+                          <span className="px-3 py-1 bg-red-600 text-white text-xs font-black tracking-widest rounded-full shadow-lg">OUT OF STOCK</span>
                         </div>
                       )}
+                      
+                      <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10">
+                        {item.isBestSeller && <span className="px-2 py-0.5 bg-yellow-400 text-yellow-900 text-[10px] w-fit font-bold rounded shadow-sm">BEST SELLER</span>}
+                        {item.isFeatured && <span className="px-2 py-0.5 bg-orange-500 text-white text-[10px] w-fit font-bold rounded shadow-sm">FEATURED</span>}
+                        {item.badge && (
+                          <div
+                            className={`text-white text-[10px] w-fit font-bold px-2 py-0.5 rounded shadow-sm ${
+                              item.badge === "HOT"
+                                ? "bg-red-500"
+                                : item.badge === "VEG"
+                                  ? "bg-green-600"
+                                  : "bg-primary"
+                            }`}
+                          >
+                            {item.badge}
+                          </div>
+                        )}
+                      </div>
                       <button
                         onClick={(e) => handleToggleFavourite(item, e)}
                         className="absolute top-3 right-3 size-8 bg-white/90 backdrop-blur rounded-full flex items-center justify-center text-slate-400 hover:text-red-500 hover:scale-110 transition-all shadow-sm z-10"
@@ -386,18 +392,22 @@ function MenuContent() {
 
                           return (
                             <button
-                              onClick={() => openAddSheet(item)}
-                              disabled={addingToCart === item.id}
+                              onClick={() => !item.isOutOfStock && openAddSheet(item)}
+                              disabled={addingToCart === item.id || item.isOutOfStock}
                               className={`flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-bold transition-colors ${
-                                addingToCart === item.id
+                                item.isOutOfStock
+                                  ? "bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200"
+                                  : addingToCart === item.id
                                   ? "bg-green-500 text-white"
                                   : "bg-primary hover:bg-orange-600 text-white shadow-sm shadow-orange-200"
                               }`}
                             >
-                              {addingToCart === item.id ? "Added!" : "Add"}
-                              <span className="material-symbols-outlined text-[18px]">
-                                {addingToCart === item.id ? "check" : "add"}
-                              </span>
+                              {item.isOutOfStock ? "Out of Stock" : addingToCart === item.id ? "Added!" : "Add"}
+                              {!item.isOutOfStock && (
+                                <span className="material-symbols-outlined text-[18px]">
+                                  {addingToCart === item.id ? "check" : "add"}
+                                </span>
+                              )}
                             </button>
                           );
                         })()}

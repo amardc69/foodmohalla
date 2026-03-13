@@ -384,7 +384,7 @@ export default function CustomizeMenuPage() {
 
       {/* Categories Bar */}
       <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-        <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-thin">
+        <div className="flex flex-wrap items-center gap-3 pb-2">
           <button
             onClick={() => setActiveCategoryFilter(null)}
             className={`px-4 py-2 rounded-full whitespace-nowrap font-bold text-sm transition-colors ${

@@ -59,8 +59,9 @@ export default function CheckoutPage() {
   const convex = useConvex();
   const addAddressMutation = useMutation(api.addresses.addAddress);
 
-  const freeDeliveryEnabled = useQuery(api.adminSettings.getSetting, { key: "freeDeliveryEnabled" }) === "true";
-  const freeDeliveryThreshold = Number(useQuery(api.adminSettings.getSetting, { key: "freeDeliveryThreshold" }) || 0);
+  const adminSettings = useQuery(api.adminSettings.getAllSettings) || {};
+  const freeDeliveryEnabled = adminSettings.freeDeliveryEnabled === "true";
+  const freeDeliveryThreshold = Number(adminSettings.freeDeliveryThreshold || 0);
 
   // Show loading while checking auth
   if (status === "loading") {

@@ -300,17 +300,21 @@ export default function ProductPage() {
                 </div>
                 <button
                   onClick={handleAddToCart}
-                  disabled={isAdding}
+                  disabled={isAdding || item.isOutOfStock}
                   className={`flex-1 font-bold text-lg py-3 px-6 rounded-xl shadow-lg flex items-center justify-center gap-3 transition-transform active:scale-[0.98] ${
-                    isAdding
+                    item.isOutOfStock
+                      ? "bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200"
+                      : isAdding
                       ? "bg-green-500 text-white shadow-green-500/30"
                       : "bg-primary hover:bg-orange-600 text-white shadow-orange-500/30"
                   }`}
                 >
-                  <span>{isAdding ? "Added!" : "Add to Cart"}</span>
-                  <span className="bg-white/20 px-2 py-0.5 rounded text-sm font-semibold">
-                    ₹{totalPrice.toFixed(2)}
-                  </span>
+                  <span>{item.isOutOfStock ? "Out of Stock" : isAdding ? "Added!" : "Add to Cart"}</span>
+                  {!item.isOutOfStock && (
+                    <span className="bg-white/20 px-2 py-0.5 rounded text-sm font-semibold">
+                      ₹{totalPrice.toFixed(2)}
+                    </span>
+                  )}
                 </button>
               </div>
             </div>

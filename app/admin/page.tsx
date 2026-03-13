@@ -184,7 +184,8 @@ export default function AdminDashboard() {
   const rejectOrderMutation = useMutation(api.orders.rejectOrder);
 
   // Notification sound preference
-  const soundPref = useQuery(api.adminSettings.getSetting, { key: "notificationSound" });
+  const adminSettings = useQuery(api.adminSettings.getAllSettings) || {};
+  const soundPref = adminSettings.notificationSound;
   const notifSound = soundPref ?? "ting";
 
   // Detect new orders

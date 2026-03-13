@@ -12,6 +12,17 @@ export const getSetting = query({
   },
 });
 
+export const getAllSettings = query({
+  args: {},
+  handler: async (ctx) => {
+    const settings = await ctx.db.query("adminSettings").collect();
+    return settings.reduce((acc, curr) => {
+      acc[curr.key] = curr.value;
+      return acc;
+    }, {} as Record<string, string>);
+  },
+});
+
 export const setSetting = mutation({
   args: { key: v.string(), value: v.string() },
   handler: async (ctx, args) => {

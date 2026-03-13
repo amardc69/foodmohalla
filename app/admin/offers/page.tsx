@@ -11,8 +11,9 @@ export default function OffersPage() {
   const deleteOffer = useMutation(api.offers.deleteOffer);
   const toggleOfferStatus = useMutation(api.offers.toggleOfferStatus);
 
-  const freeDeliveryEnabled = useQuery(api.adminSettings.getSetting, { key: "freeDeliveryEnabled" });
-  const freeDeliveryThreshold = useQuery(api.adminSettings.getSetting, { key: "freeDeliveryThreshold" });
+  const adminSettings = useQuery(api.adminSettings.getAllSettings);
+  const freeDeliveryEnabled = adminSettings?.freeDeliveryEnabled;
+  const freeDeliveryThreshold = adminSettings?.freeDeliveryThreshold;
   const setSetting = useMutation(api.adminSettings.setSetting);
 
   const [isEditing, setIsEditing] = useState(false);

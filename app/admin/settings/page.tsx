@@ -38,7 +38,8 @@ function playDong() {
 }
 
 export default function SettingsPage() {
-  const soundPref = useQuery(api.adminSettings.getSetting, { key: "notificationSound" });
+  const adminSettings = useQuery(api.adminSettings.getAllSettings) || {};
+  const soundPref = adminSettings.notificationSound;
   const setSettingMutation = useMutation(api.adminSettings.setSetting);
 
   const [selectedSound, setSelectedSound] = useState("ting");
