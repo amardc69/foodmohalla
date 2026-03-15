@@ -283,6 +283,7 @@ export const createOrder = mutation({
     deliveryFlat: v.optional(v.string()),
     deliveryLandmark: v.optional(v.string()),
     customerPhone: v.optional(v.string()), // Added phone
+    orderType: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     // Try to get customer name from the users table
@@ -320,6 +321,7 @@ export const createOrder = mutation({
       deliveryFlat: args.deliveryFlat,
       deliveryLandmark: args.deliveryLandmark,
       customerPhone: args.customerPhone,
+      orderType: args.orderType,
       userId: args.userId,
     });
 

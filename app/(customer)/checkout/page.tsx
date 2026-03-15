@@ -46,6 +46,18 @@ export default function CheckoutPage() {
   const [discountAmount, setDiscountAmount] = useState(0);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [locationError, setLocationError] = useState("");
+  const [orderType, setOrderType] = useState<"Delivery" | "Takeaway">("Delivery");
+  const [isStoreClosed, setIsStoreClosed] = useState(false);
+
+  useEffect(() => {
+    const checkTime = () => {
+      const hour = new Date().getHours();
+      setIsStoreClosed(hour >= 2 && hour < 11);
+    };
+    checkTime();
+    const interval = setInterval(checkTime, 60000);
+    return () => clearInterval(interval);
+  }, []);
   
   // Custom Address Form States
   const [showAddressForm, setShowAddressForm] = useState(false);
@@ -198,7 +210,7 @@ export default function CheckoutPage() {
     return (item.menuItem.price + addonSum) * item.quantity;
   }
 
-  const currentDeliveryFee = freeDeliveryEnabled && total >= freeDeliveryThreshold ? 0 : DELIVERY_FEE;
+  const currentDeliveryFee = orderType === "Takeaway" ? 0 : (freeDeliveryEnabled && total >= freeDeliveryThreshold ? 0 : DELIVERY_FEE);
   const grandTotal = total + currentDeliveryFee + TAX_RATE - discountAmount;
 
   async function placeOrder() {
@@ -228,6 +240,7 @@ export default function CheckoutPage() {
       deliveryFlat: selectedAddress?.flat,
       deliveryLandmark: selectedAddress?.landmark,
       customerPhone: dbUser?.phone,
+      orderType,
     });
     
     await clearCart({ userId });
@@ -242,7 +255,33 @@ export default function CheckoutPage() {
       <div className="flex flex-col lg:flex-row gap-8">
         {/* Left: Address & Payment */}
         <div className="lg:w-2/3 space-y-6">
+
+          {/* Order Type Toggle */}
+          <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+            <h2 className="text-lg font-bold text-text-main mb-4 flex items-center gap-2">
+              <span className="material-symbols-outlined text-primary">store</span>
+              Order Type
+            </h2>
+            <div className="flex bg-gray-100 p-1 rounded-lg">
+              <button
+                onClick={() => setOrderType("Delivery")}
+                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-md font-bold text-sm transition-all ${orderType === "Delivery" ? "bg-white text-primary shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+              >
+                <span className="material-symbols-outlined text-[18px]">local_shipping</span>
+                Delivery
+              </button>
+              <button
+                onClick={() => setOrderType("Takeaway")}
+                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-md font-bold text-sm transition-all ${orderType === "Takeaway" ? "bg-white text-primary shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+              >
+                <span className="material-symbols-outlined text-[18px]">shopping_bag</span>
+                Takeaway
+              </button>
+            </div>
+          </div>
+
           {/* Delivery Address — fetched from Convex */}
+          {orderType === "Delivery" && (
           <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm relative overflow-hidden">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
@@ -375,6 +414,7 @@ export default function CheckoutPage() {
                 </div>
             )}
           </div>
+          )}
 
           {/* Payment Method */}
           <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
@@ -534,9 +574,14 @@ export default function CheckoutPage() {
               </div>
               {/* Place Order */}
               <div className="p-5 pt-0 bg-gray-50/50">
+                {isStoreClosed && (
+                  <div className="mb-4 bg-red-50 border border-red-200 rounded-lg p-3 text-center">
+                    <p className="text-sm font-bold text-red-600">Store is currently closed <br/> (2:00 AM – 11:00 AM)</p>
+                  </div>
+                )}
                 <button
                   onClick={placeOrder}
-                  disabled={cart.length === 0 || isPlacing || !selectedAddress}
+                  disabled={cart.length === 0 || isPlacing || (orderType === "Delivery" && !selectedAddress) || isStoreClosed}
                   className="w-full bg-primary hover:bg-primary-dark text-white font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-primary/30 transition-all transform active:scale-[0.98] flex items-center justify-between group disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <div className="flex flex-col items-start leading-none">

@@ -76,6 +76,7 @@ export default defineSchema({
     userId: v.optional(v.string()),
     adminTime: v.optional(v.number()),
     acceptedAt: v.optional(v.number()),
+    orderType: v.optional(v.string()),
   })
     .index("by_status", ["status"])
     .index("by_user", ["userId"]),

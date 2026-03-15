@@ -15,15 +15,39 @@ import {
 import { Button } from "@/components/ui/button";
 
 /* ─── Status configuration ────────────────────────────────────────────────── */
-const STATUS_LIST = ["All", "Pending", "Preparing", "Out for Delivery", "Delivered", "Rejected"] as const;
+const STATUS_LIST = [
+  "All",
+  "Pending",
+  "Preparing",
+  "Out for Delivery",
+  "Delivered",
+  "Rejected",
+] as const;
 
-const statusColors: Record<string, { bg: string; text: string; ring: string }> = {
-  Preparing: { bg: "bg-blue-50", text: "text-blue-600", ring: "ring-blue-200" },
-  "Out for Delivery": { bg: "bg-orange-50", text: "text-orange-600", ring: "ring-orange-200" },
-  Delivered: { bg: "bg-green-50", text: "text-green-600", ring: "ring-green-200" },
-  Pending: { bg: "bg-yellow-50", text: "text-yellow-700", ring: "ring-yellow-200" },
-  Rejected: { bg: "bg-red-50", text: "text-red-600", ring: "ring-red-200" },
-};
+const statusColors: Record<string, { bg: string; text: string; ring: string }> =
+  {
+    Preparing: {
+      bg: "bg-blue-50",
+      text: "text-blue-600",
+      ring: "ring-blue-200",
+    },
+    "Out for Delivery": {
+      bg: "bg-orange-50",
+      text: "text-orange-600",
+      ring: "ring-orange-200",
+    },
+    Delivered: {
+      bg: "bg-green-50",
+      text: "text-green-600",
+      ring: "ring-green-200",
+    },
+    Pending: {
+      bg: "bg-yellow-50",
+      text: "text-yellow-700",
+      ring: "ring-yellow-200",
+    },
+    Rejected: { bg: "bg-red-50", text: "text-red-600", ring: "ring-red-200" },
+  };
 
 const statusFlow = ["Pending", "Preparing", "Out for Delivery", "Delivered"];
 
@@ -57,7 +81,9 @@ function playTing() {
       osc.start(t);
       osc.stop(t + 0.6);
     });
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 }
 
 function playDong() {
@@ -87,7 +113,9 @@ function playDong() {
     gain2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 1.5);
     osc2.start(ctx.currentTime);
     osc2.stop(ctx.currentTime + 1.5);
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 }
 
 /* ─── Print helper ────────────────────────────────────────────────────────── */
@@ -112,7 +140,8 @@ function printOrder(order: any) {
     <p><strong>Customer:</strong> ${order.customer.name}${order.customerUsername ? ` (@${order.customerUsername})` : ""}</p>
     <p><strong>Status:</strong> ${order.status}</p>
     <p><strong>Payment:</strong> ${order.paymentMethod || "N/A"}</p>
-    ${order.deliveryAddress ? `<div class="addr"><strong>Address:</strong><br>${order.deliveryFlat ? order.deliveryFlat + ", " : ""}${order.deliveryAddress}${order.deliveryLandmark ? "<br>Landmark: " + order.deliveryLandmark : ""}</div>` : ""}
+    <p><strong>Type:</strong> ${order.orderType || "Delivery"}</p>
+    ${order.orderType !== "Takeaway" && order.deliveryAddress ? `<div class="addr"><strong>Address:</strong><br>${order.deliveryFlat ? order.deliveryFlat + ", " : ""}${order.deliveryAddress}${order.deliveryLandmark ? "<br>Landmark: " + order.deliveryLandmark : ""}</div>` : ""}
     <table>
       <tr><th>Item</th><th>Qty</th><th>Price</th></tr>
       ${order.items.map((i: any) => `<tr><td>${i.name}</td><td>${i.quantity}</td><td>₹${(i.price * i.quantity).toFixed(2)}</td></tr>`).join("")}
@@ -140,7 +169,9 @@ function getMapsLink(order: any): string | null {
 /* ─── WhatsApp share helper ───────────────────────────────────────────────── */
 function shareOnWhatsApp(order: any) {
   const mapsLink = getMapsLink(order);
-  const items = order.items.map((i: any) => `• ${i.quantity}x ${i.name}`).join("\n");
+  const items = order.items
+    .map((i: any) => `• ${i.quantity}x ${i.name}`)
+    .join("\n");
   const text = [
     `🛵 *Order ${order.displayId}*`,
     `👤 *Customer:* ${order.customer.name}${order.customerUsername ? ` (@${order.customerUsername})` : ""}`,
@@ -151,9 +182,14 @@ function shareOnWhatsApp(order: any) {
     ``,
     `💰 *Total:* ${order.displayPrice}`,
     `📌 *Status:* ${order.status}`,
-    order.deliveryAddress ? `\n📍 *Address:* ${order.deliveryFlat ? order.deliveryFlat + ", " : ""}${order.deliveryAddress}${order.deliveryLandmark ? " (Landmark: " + order.deliveryLandmark + ")" : ""}` : "",
+    `🛒 *Type:* ${order.orderType || "Delivery"}`,
+    order.orderType !== "Takeaway" && order.deliveryAddress
+      ? `\n📍 *Address:* ${order.deliveryFlat ? order.deliveryFlat + ", " : ""}${order.deliveryAddress}${order.deliveryLandmark ? " (Landmark: " + order.deliveryLandmark + ")" : ""}`
+      : "",
     mapsLink ? `\n🗺️ *Directions:* ${mapsLink}` : "",
-  ].filter(Boolean).join("\n");
+  ]
+    .filter(Boolean)
+    .join("\n");
   window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
 }
 
@@ -178,7 +214,11 @@ export default function AdminDashboard() {
   const knownOrderIds = useRef<Set<string>>(new Set());
   const isFirstLoad = useRef(true);
 
-  const data = useQuery(api.orders.getOrders, { search, statusFilter, statsPeriod });
+  const data = useQuery(api.orders.getOrders, {
+    search,
+    statusFilter,
+    statsPeriod,
+  });
   const updateStatus = useMutation(api.orders.updateOrderStatus);
   const acceptOrderMutation = useMutation(api.orders.acceptOrder);
   const rejectOrderMutation = useMutation(api.orders.rejectOrder);
@@ -211,7 +251,7 @@ export default function AdminDashboard() {
     }
 
     const newOrders = data.orders.filter(
-      (o: any) => o.status === "Pending" && !knownOrderIds.current.has(o._id)
+      (o: any) => o.status === "Pending" && !knownOrderIds.current.has(o._id),
     );
 
     if (newOrders.length > 0) {
@@ -247,10 +287,10 @@ export default function AdminDashboard() {
         const lock = await (navigator as any).wakeLock.request("screen");
         wakeLockRef.current = lock;
         setWakeLockEnabled(true);
-        
-        lock.addEventListener('release', () => {
-          if (document.visibilityState === 'visible') {
-             setWakeLockEnabled(false);
+
+        lock.addEventListener("release", () => {
+          if (document.visibilityState === "visible") {
+            setWakeLockEnabled(false);
           }
         });
       }
@@ -262,16 +302,23 @@ export default function AdminDashboard() {
   // Re-acquire wake lock on visibility change if it SHOULD be enabled
   useEffect(() => {
     const handleVisibilityChange = async () => {
-      if (wakeLockEnabled && document.visibilityState === "visible" && wakeLockRef.current === null) {
+      if (
+        wakeLockEnabled &&
+        document.visibilityState === "visible" &&
+        wakeLockRef.current === null
+      ) {
         try {
-           wakeLockRef.current = await (navigator as any).wakeLock.request("screen");
+          wakeLockRef.current = await (navigator as any).wakeLock.request(
+            "screen",
+          );
         } catch (err) {
-           console.error("Could not re-acquire wake lock", err);
+          console.error("Could not re-acquire wake lock", err);
         }
       }
     };
     document.addEventListener("visibilitychange", handleVisibilityChange);
-    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+    return () =>
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
   }, [wakeLockEnabled]);
 
   const currentNewOrder = newOrderQueue[0];
@@ -279,15 +326,18 @@ export default function AdminDashboard() {
   const handleAcceptNewOrder = useCallback(async () => {
     if (!currentNewOrder) return;
     // Validate address before accepting
-    if (!currentNewOrder.deliveryAddress || currentNewOrder.deliveryAddress.trim() === "") {
+    if (
+      !currentNewOrder.deliveryAddress ||
+      currentNewOrder.deliveryAddress.trim() === ""
+    ) {
       alert("Cannot accept order — no delivery address provided by customer.");
       return;
     }
-    
+
     try {
-      await acceptOrderMutation({ 
+      await acceptOrderMutation({
         orderId: currentNewOrder._id as Id<"orders">,
-        adminTime: adminTimeEstimate 
+        adminTime: adminTimeEstimate,
       });
       setNewOrderQueue((prev) => prev.slice(1));
       setShowRejectForm(false);
@@ -297,7 +347,12 @@ export default function AdminDashboard() {
     } catch (err: any) {
       alert(err.message || "Failed to accept order");
     }
-  }, [currentNewOrder, acceptOrderMutation, newOrderQueue.length, adminTimeEstimate]);
+  }, [
+    currentNewOrder,
+    acceptOrderMutation,
+    newOrderQueue.length,
+    adminTimeEstimate,
+  ]);
 
   const handleRejectNewOrder = useCallback(async () => {
     if (!currentNewOrder || !rejectReason.trim()) return;
@@ -309,7 +364,12 @@ export default function AdminDashboard() {
     setShowRejectForm(false);
     setRejectReason("");
     if (newOrderQueue.length <= 1) setShowNewOrderDialog(false);
-  }, [currentNewOrder, rejectReason, rejectOrderMutation, newOrderQueue.length]);
+  }, [
+    currentNewOrder,
+    rejectReason,
+    rejectOrderMutation,
+    newOrderQueue.length,
+  ]);
 
   const handleSkipToNext = useCallback(() => {
     setNewOrderQueue((prev) => [...prev.slice(1), prev[0]]);
@@ -320,9 +380,14 @@ export default function AdminDashboard() {
   const handleStatusChange = useCallback(
     async (orderId: string, newStatus: string) => {
       try {
-        await updateStatus({ orderId: orderId as Id<"orders">, status: newStatus });
+        await updateStatus({
+          orderId: orderId as Id<"orders">,
+          status: newStatus,
+        });
         if (selectedOrder && selectedOrder._id === orderId) {
-          setSelectedOrder((prev: any) => prev ? { ...prev, status: newStatus } : prev);
+          setSelectedOrder((prev: any) =>
+            prev ? { ...prev, status: newStatus } : prev,
+          );
         }
       } catch (err: any) {
         alert(err.message || "Failed to update status");
@@ -330,7 +395,7 @@ export default function AdminDashboard() {
       setStatusChangeOrder(null);
       setPendingStatus(null);
     },
-    [updateStatus, selectedOrder]
+    [updateStatus, selectedOrder],
   );
 
   if (data === undefined) {
@@ -360,21 +425,27 @@ export default function AdminDashboard() {
           <button
             onClick={toggleWakeLock}
             className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-bold border transition-colors ${
-              wakeLockEnabled 
+              wakeLockEnabled
                 ? "bg-amber-50 text-amber-700 border-amber-200 shadow-sm"
                 : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"
             }`}
-            title={wakeLockEnabled ? "Screen Wake Lock Active" : "Click to keep screen awake"}
+            title={
+              wakeLockEnabled
+                ? "Screen Wake Lock Active"
+                : "Click to keep screen awake"
+            }
           >
             <span className="material-symbols-outlined text-[18px]">
               {wakeLockEnabled ? "lightbulb" : "lightbulb_outline"}
             </span>
             {wakeLockEnabled ? "Awake" : "Allow Sleep"}
           </button>
-          
+
           <div className="relative">
             <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
-              <span className="material-symbols-outlined text-[20px]">search</span>
+              <span className="material-symbols-outlined text-[20px]">
+                search
+              </span>
             </span>
             <input
               className="pl-10 pr-4 py-2 border-none ring-1 ring-gray-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-primary outline-none shadow-sm"
@@ -391,7 +462,11 @@ export default function AdminDashboard() {
       <div className="space-y-3">
         <div className="flex items-center gap-2">
           {(["today", "week", "all"] as const).map((p) => {
-            const labels: Record<string, string> = { today: "Today", week: "This Week", all: "All Time" };
+            const labels: Record<string, string> = {
+              today: "Today",
+              week: "This Week",
+              all: "All Time",
+            };
             return (
               <button
                 key={p}
@@ -409,18 +484,42 @@ export default function AdminDashboard() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[
-            { icon: "attach_money", label: `Revenue (${statsPeriod === "today" ? "Today" : statsPeriod === "week" ? "This Week" : "All Time"})`, value: stats.totalRevenue, gradient: "from-emerald-500 to-green-600" },
-            { icon: "pending_actions", label: `Pending Orders`, value: String(stats.pendingOrders), gradient: "from-amber-500 to-orange-600" },
-            { icon: "check_circle", label: `Delivered (${statsPeriod === "today" ? "Today" : statsPeriod === "week" ? "This Week" : "All Time"})`, value: String(stats.deliveredToday), gradient: "from-blue-500 to-indigo-600" },
+            {
+              icon: "attach_money",
+              label: `Revenue (${statsPeriod === "today" ? "Today" : statsPeriod === "week" ? "This Week" : "All Time"})`,
+              value: stats.totalRevenue,
+              gradient: "from-emerald-500 to-green-600",
+            },
+            {
+              icon: "pending_actions",
+              label: `Pending Orders`,
+              value: String(stats.pendingOrders),
+              gradient: "from-amber-500 to-orange-600",
+            },
+            {
+              icon: "check_circle",
+              label: `Delivered (${statsPeriod === "today" ? "Today" : statsPeriod === "week" ? "This Week" : "All Time"})`,
+              value: String(stats.deliveredToday),
+              gradient: "from-blue-500 to-indigo-600",
+            },
           ].map((stat) => (
-            <div key={stat.label} className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+            <div
+              key={stat.label}
+              className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
+            >
               <div className="flex items-center justify-between mb-4">
-                <div className={`p-2.5 bg-gradient-to-br ${stat.gradient} rounded-lg text-white shadow-sm`}>
+                <div
+                  className={`p-2.5 bg-gradient-to-br ${stat.gradient} rounded-lg text-white shadow-sm`}
+                >
                   <span className="material-symbols-outlined">{stat.icon}</span>
                 </div>
               </div>
-              <p className="text-text-muted text-sm font-medium">{stat.label}</p>
-              <h3 className="text-2xl font-bold text-text-main mt-1">{stat.value}</h3>
+              <p className="text-text-muted text-sm font-medium">
+                {stat.label}
+              </p>
+              <h3 className="text-2xl font-bold text-text-main mt-1">
+                {stat.value}
+              </h3>
             </div>
           ))}
         </div>
@@ -449,7 +548,9 @@ export default function AdminDashboard() {
           <h3 className="text-lg font-bold text-text-main">
             Orders {statusFilter !== "All" ? `— ${statusFilter}` : ""}
           </h3>
-          <span className="text-sm text-text-muted">{orders.length} order{orders.length !== 1 ? "s" : ""}</span>
+          <span className="text-sm text-text-muted">
+            {orders.length} order{orders.length !== 1 ? "s" : ""}
+          </span>
         </div>
         <div className="overflow-x-auto w-full">
           <table className="w-full text-left border-collapse">
@@ -458,6 +559,7 @@ export default function AdminDashboard() {
                 <th className="px-6 py-4 rounded-tl-lg">Order ID</th>
                 <th className="px-6 py-4">Customer</th>
                 <th className="px-6 py-4">Items</th>
+                <th className="px-6 py-4">Type</th>
                 <th className="px-6 py-4">Status</th>
                 <th className="px-6 py-4">Total Price</th>
                 <th className="px-6 py-4 rounded-tr-lg text-center">Actions</th>
@@ -473,67 +575,115 @@ export default function AdminDashboard() {
                     onClick={() => setSelectedOrder(order)}
                   >
                     <td className="px-6 py-4">
-                      <span className="font-medium text-text-main">{order.displayId}</span>
+                      <span className="font-medium text-text-main">
+                        {order.displayId}
+                      </span>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div
                           className="w-8 h-8 rounded-full bg-gray-200 bg-cover bg-center flex-shrink-0"
-                          style={{ backgroundImage: `url('${order.customer.avatar}')` }}
+                          style={{
+                            backgroundImage: `url('${order.customer.avatar}')`,
+                          }}
                         ></div>
                         <div>
-                          <p className="text-sm font-medium text-text-main">{order.customer.name}</p>
+                          <p className="text-sm font-medium text-text-main">
+                            {order.customer.name}
+                          </p>
                           {order.customerUsername && (
-                            <p className="text-xs text-text-muted">@{order.customerUsername}</p>
+                            <p className="text-xs text-text-muted">
+                              @{order.customerUsername}
+                            </p>
                           )}
                           {!order.customerUsername && (
-                            <p className="text-xs text-text-muted">{order.timeAgo}</p>
+                            <p className="text-xs text-text-muted">
+                              {order.timeAgo}
+                            </p>
                           )}
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex flex-col gap-1">
-                        <p className="text-sm text-text-muted max-w-[200px] truncate">{order.itemsSummary}</p>
-                        {order.items.some((i: any) => (i.addons && i.addons.length > 0) || (i.instructions && i.instructions.length > 0)) && (
-                          <span className="text-[10px] font-bold bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded w-fit">Has Customizations</span>
+                        <p className="text-sm text-text-muted max-w-[200px] truncate">
+                          {order.itemsSummary}
+                        </p>
+                        {order.items.some(
+                          (i: any) =>
+                            (i.addons && i.addons.length > 0) ||
+                            (i.instructions && i.instructions.length > 0),
+                        ) && (
+                          <span className="text-[10px] font-bold bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded w-fit">
+                            Has Customizations
+                          </span>
                         )}
                       </div>
                     </td>
                     <td className="px-6 py-4">
+                      <span
+                        className={`px-2 py-1 text-[10px] font-bold rounded-md ${order.orderType === "Takeaway" ? "bg-purple-100 text-purple-700" : "bg-blue-100 text-blue-700"}`}
+                      >
+                        {order.orderType || "Delivery"}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
                       {(() => {
                         const forwardOptions = getForwardStatuses(order.status);
-                        const canChange = forwardOptions.length > 0 || (order.status !== "Delivered" && order.status !== "Rejected");
+                        const canChange =
+                          forwardOptions.length > 0 ||
+                          (order.status !== "Delivered" &&
+                            order.status !== "Rejected");
                         return (
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              if (canChange) { setStatusChangeOrder(order); setPendingStatus(null); }
+                              if (canChange) {
+                                setStatusChangeOrder(order);
+                                setPendingStatus(null);
+                              }
                             }}
                             className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold ring-1 ${sc.bg} ${sc.text} ${sc.ring} hover:shadow-sm transition-all ${canChange ? "cursor-pointer" : "cursor-default opacity-80"}`}
                           >
                             {order.status}
-                            {canChange && <span className="material-symbols-outlined text-[14px]">expand_more</span>}
+                            {canChange && (
+                              <span className="material-symbols-outlined text-[14px]">
+                                expand_more
+                              </span>
+                            )}
                           </button>
                         );
                       })()}
                     </td>
-                    <td className="px-6 py-4 font-medium text-text-main">{order.displayPrice}</td>
-                    <td className="px-6 py-4 text-center" onClick={(e) => e.stopPropagation()}>
+                    <td className="px-6 py-4 font-medium text-text-main">
+                      {order.displayPrice}
+                    </td>
+                    <td
+                      className="px-6 py-4 text-center"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <div className="flex items-center justify-center gap-1">
                         <button
                           onClick={() => shareOnWhatsApp(order)}
                           className="p-2 rounded-lg text-gray-400 hover:text-green-600 hover:bg-green-50 transition-all"
                           title="Share on WhatsApp"
                         >
-                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+                          <svg
+                            className="w-5 h-5"
+                            fill="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
+                          </svg>
                         </button>
                         <button
                           onClick={() => printOrder(order)}
                           className="p-2 rounded-lg text-gray-400 hover:text-primary hover:bg-primary/5 transition-all"
                           title="Print Order"
                         >
-                          <span className="material-symbols-outlined text-[20px]">print</span>
+                          <span className="material-symbols-outlined text-[20px]">
+                            print
+                          </span>
                         </button>
                       </div>
                     </td>
@@ -542,8 +692,13 @@ export default function AdminDashboard() {
               })}
               {orders.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-text-muted">
-                    <span className="material-symbols-outlined text-4xl text-gray-300 block mb-2">inbox</span>
+                  <td
+                    colSpan={6}
+                    className="px-6 py-12 text-center text-text-muted"
+                  >
+                    <span className="material-symbols-outlined text-4xl text-gray-300 block mb-2">
+                      inbox
+                    </span>
                     No orders found.
                   </td>
                 </tr>
@@ -554,16 +709,25 @@ export default function AdminDashboard() {
       </div>
 
       {/* ─── ORDER DETAIL DIALOG (shadcn) ─────────────────────────────────── */}
-      <Dialog open={!!selectedOrder} onOpenChange={(open) => { if (!open) setSelectedOrder(null); }}>
+      <Dialog
+        open={!!selectedOrder}
+        onOpenChange={(open) => {
+          if (!open) setSelectedOrder(null);
+        }}
+      >
         <DialogContent className="sm:max-w-[520px] max-h-[85vh] overflow-y-auto gap-0 p-0">
           <DialogHeader className="px-6 pt-6 pb-4 border-b">
             <div className="flex items-center justify-between">
               <div>
-                <DialogTitle className="text-lg">{selectedOrder?.displayId}</DialogTitle>
+                <DialogTitle className="text-lg">
+                  {selectedOrder?.displayId}
+                </DialogTitle>
                 <DialogDescription>{selectedOrder?.timeAgo}</DialogDescription>
               </div>
               {selectedOrder && (
-                <span className={`px-3 py-1 rounded-full text-xs font-bold ${statusColors[selectedOrder.status]?.bg} ${statusColors[selectedOrder.status]?.text}`}>
+                <span
+                  className={`px-3 py-1 rounded-full text-xs font-bold ${statusColors[selectedOrder.status]?.bg} ${statusColors[selectedOrder.status]?.text}`}
+                >
                   {selectedOrder.status}
                 </span>
               )}
@@ -576,47 +740,76 @@ export default function AdminDashboard() {
               <div className="flex items-center gap-3">
                 <div
                   className="w-10 h-10 rounded-full bg-gray-200 bg-cover bg-center flex-shrink-0"
-                  style={{ backgroundImage: `url('${selectedOrder.customer.avatar}')` }}
+                  style={{
+                    backgroundImage: `url('${selectedOrder.customer.avatar}')`,
+                  }}
                 ></div>
                 <div>
-                  <p className="font-semibold text-sm">{selectedOrder.customer.name}</p>
+                  <p className="font-semibold text-sm">
+                    {selectedOrder.customer.name}
+                  </p>
                   {selectedOrder.customerUsername && (
-                    <p className="text-xs text-muted-foreground">@{selectedOrder.customerUsername}</p>
+                    <p className="text-xs text-muted-foreground">
+                      @{selectedOrder.customerUsername}
+                    </p>
                   )}
                 </div>
               </div>
 
               {/* Items */}
               <div>
-                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Order Items</h4>
+                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                  Order Items
+                </h4>
                 <div className="space-y-1.5">
                   {selectedOrder.items.map((item: any, idx: number) => (
-                    <div key={idx} className="flex flex-col bg-muted/50 rounded-md px-3 py-2">
+                    <div
+                      key={idx}
+                      className="flex flex-col bg-muted/50 rounded-md px-3 py-2"
+                    >
                       <div className="flex items-center justify-between text-sm">
                         <div className="flex items-center gap-2">
-                          <span className="w-6 h-6 rounded bg-primary/10 text-primary flex items-center justify-center font-bold text-xs">{item.quantity}x</span>
+                          <span className="w-6 h-6 rounded bg-primary/10 text-primary flex items-center justify-center font-bold text-xs">
+                            {item.quantity}x
+                          </span>
                           <span className="font-medium">{item.name}</span>
                         </div>
-                        <span className="text-muted-foreground">₹{((item.price + (item.addons?.reduce((sum: number, a: any) => sum + (a.price || 0), 0) || 0)) * item.quantity).toFixed(2)}</span>
+                        <span className="text-muted-foreground">
+                          ₹
+                          {(
+                            (item.price +
+                              (item.addons?.reduce(
+                                (sum: number, a: any) => sum + (a.price || 0),
+                                0,
+                              ) || 0)) *
+                            item.quantity
+                          ).toFixed(2)}
+                        </span>
                       </div>
-                      
+
                       {/* Addons */}
                       {item.addons && item.addons.length > 0 && (
                         <div className="ml-10 mt-1 flex flex-col gap-0.5">
                           {item.addons.map((a: any, i: number) => (
-                            <div key={i} className="flex items-center justify-between text-xs text-muted-foreground">
+                            <div
+                              key={i}
+                              className="flex items-center justify-between text-xs text-muted-foreground"
+                            >
                               <span>+ {a.name}</span>
                               <span>₹{(a.price || 0).toFixed(2)}</span>
                             </div>
                           ))}
                         </div>
                       )}
-                      
+
                       {/* Instructions */}
                       {item.instructions && item.instructions.length > 0 && (
                         <div className="ml-10 mt-1.5 flex flex-wrap gap-1">
                           {item.instructions.map((inst: string, i: number) => (
-                            <span key={i} className="text-[10px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded border border-amber-200">
+                            <span
+                              key={i}
+                              className="text-[10px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded border border-amber-200"
+                            >
                               {inst.replace("Custom: ", "")}
                             </span>
                           ))}
@@ -631,64 +824,120 @@ export default function AdminDashboard() {
               <div className="bg-muted/50 rounded-lg p-4 space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Payment Method</span>
-                  <span className="font-medium capitalize">{selectedOrder.paymentMethod || "N/A"}</span>
+                  <span className="font-medium capitalize">
+                    {selectedOrder.paymentMethod || "N/A"}
+                  </span>
                 </div>
                 {selectedOrder.appliedCoupon && (
                   <div className="flex justify-between text-green-600">
                     <span>Coupon ({selectedOrder.appliedCoupon})</span>
-                    <span>−₹{(selectedOrder.discountAmount || 0).toFixed(2)}</span>
+                    <span>
+                      −₹{(selectedOrder.discountAmount || 0).toFixed(2)}
+                    </span>
                   </div>
                 )}
                 <div className="flex justify-between font-bold text-base border-t pt-2 mt-1">
                   <span>Total</span>
-                  <span className="text-primary">{selectedOrder.displayPrice}</span>
+                  <span className="text-primary">
+                    {selectedOrder.displayPrice}
+                  </span>
                 </div>
               </div>
 
-              {/* Address */}
-              {selectedOrder.deliveryAddress && (
-                <div>
-                  <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Delivery Address</h4>
-                  <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 dark:bg-blue-950/20 dark:border-blue-900">
-                    <p className="text-sm text-blue-900 dark:text-blue-100 leading-relaxed">
-                      {selectedOrder.deliveryFlat ? <span className="font-semibold">Flat/Bldg: {selectedOrder.deliveryFlat}, </span> : ""}
-                      {selectedOrder.deliveryAddress}
-                    </p>
-                    {selectedOrder.deliveryLandmark && (
-                      <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">Landmark: {selectedOrder.deliveryLandmark}</p>
-                    )}
-                    {getMapsLink(selectedOrder) && (
-                      <a
-                        href={getMapsLink(selectedOrder)!}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-800 bg-white hover:bg-blue-50 px-3 py-1.5 rounded-md transition-colors font-medium border border-blue-200 mt-2.5"
-                      >
-                        <span className="material-symbols-outlined text-[14px]">directions</span>
-                        View on Google Maps
-                      </a>
-                    )}
-                  </div>
+              {/* Type and Address */}
+              <div>
+                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                  Order Type
+                </h4>
+                <div
+                  className={`border rounded-lg p-3 mb-4 ${selectedOrder.orderType === "Takeaway" ? "bg-purple-50 border-purple-100 dark:bg-purple-950/20 dark:border-purple-900" : "bg-orange-50 border-orange-100 dark:bg-orange-950/20 dark:border-orange-900"}`}
+                >
+                  <p
+                    className={`text-sm font-bold ${selectedOrder.orderType === "Takeaway" ? "text-purple-900 dark:text-purple-100" : "text-orange-900 dark:text-orange-100"}`}
+                  >
+                    {selectedOrder.orderType || "Delivery"}
+                  </p>
                 </div>
-              )}
+              </div>
+
+              {selectedOrder.orderType !== "Takeaway" &&
+                selectedOrder.deliveryAddress && (
+                  <div>
+                    <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                      Delivery Address
+                    </h4>
+                    <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 dark:bg-blue-950/20 dark:border-blue-900">
+                      <p className="text-sm text-blue-900 dark:text-blue-100 leading-relaxed">
+                        {selectedOrder.deliveryFlat ? (
+                          <span className="font-semibold">
+                            Flat/Bldg: {selectedOrder.deliveryFlat},{" "}
+                          </span>
+                        ) : (
+                          ""
+                        )}
+                        {selectedOrder.deliveryAddress}
+                      </p>
+                      {selectedOrder.deliveryLandmark && (
+                        <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                          Landmark: {selectedOrder.deliveryLandmark}
+                        </p>
+                      )}
+                      {getMapsLink(selectedOrder) && (
+                        <a
+                          href={getMapsLink(selectedOrder)!}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-800 bg-white hover:bg-blue-50 px-3 py-1.5 rounded-md transition-colors font-medium border border-blue-200 mt-2.5"
+                        >
+                          <span className="material-symbols-outlined text-[14px]">
+                            directions
+                          </span>
+                          View on Google Maps
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                )}
 
               {/* Rejection reason */}
-              {selectedOrder.status === "Rejected" && selectedOrder.rejectionReason && (
-                <div className="bg-red-50 border border-red-100 rounded-lg p-3 dark:bg-red-950/20 dark:border-red-900">
-                  <h4 className="text-xs font-semibold text-red-800 dark:text-red-300 mb-1">Rejection Reason</h4>
-                  <p className="text-sm text-red-700 dark:text-red-200">{selectedOrder.rejectionReason}</p>
-                </div>
-              )}
+              {selectedOrder.status === "Rejected" &&
+                selectedOrder.rejectionReason && (
+                  <div className="bg-red-50 border border-red-100 rounded-lg p-3 dark:bg-red-950/20 dark:border-red-900">
+                    <h4 className="text-xs font-semibold text-red-800 dark:text-red-300 mb-1">
+                      Rejection Reason
+                    </h4>
+                    <p className="text-sm text-red-700 dark:text-red-200">
+                      {selectedOrder.rejectionReason}
+                    </p>
+                  </div>
+                )}
             </div>
           )}
 
           <DialogFooter className="px-6 py-4 border-t bg-muted/30">
-            <Button variant="outline" size="sm" onClick={() => selectedOrder && shareOnWhatsApp(selectedOrder)} className="text-green-600 border-green-200 hover:bg-green-50">
-              <svg className="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => selectedOrder && shareOnWhatsApp(selectedOrder)}
+              className="text-green-600 border-green-200 hover:bg-green-50"
+            >
+              <svg
+                className="w-4 h-4 mr-1.5"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
+              </svg>
               WhatsApp
             </Button>
-            <Button variant="outline" size="sm" onClick={() => selectedOrder && printOrder(selectedOrder)}>
-              <span className="material-symbols-outlined text-[16px] mr-1.5">print</span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => selectedOrder && printOrder(selectedOrder)}
+            >
+              <span className="material-symbols-outlined text-[16px] mr-1.5">
+                print
+              </span>
               Print
             </Button>
             <Button size="sm" onClick={() => setSelectedOrder(null)}>
@@ -699,19 +948,37 @@ export default function AdminDashboard() {
       </Dialog>
 
       {/* ─── NEW ORDER NOTIFICATION DIALOG (shadcn) ───────────────────────── */}
-      <Dialog open={showNewOrderDialog && !!currentNewOrder} onOpenChange={(open) => { if (!open) { setShowNewOrderDialog(false); setShowRejectForm(false); setRejectReason(""); } }}>
-        <DialogContent className="sm:max-w-[440px] gap-0 p-0" showCloseButton={false}>
+      <Dialog
+        open={showNewOrderDialog && !!currentNewOrder}
+        onOpenChange={(open) => {
+          if (!open) {
+            setShowNewOrderDialog(false);
+            setShowRejectForm(false);
+            setRejectReason("");
+          }
+        }}
+      >
+        <DialogContent
+          className="sm:max-w-[440px] gap-0 p-0"
+          showCloseButton={false}
+        >
           {/* Custom gradient header */}
           <div className="bg-gradient-to-r from-amber-500 to-orange-500 px-6 py-4 rounded-t-lg flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="relative">
-                <span className="material-symbols-outlined text-white text-2xl">notifications_active</span>
+                <span className="material-symbols-outlined text-white text-2xl">
+                  notifications_active
+                </span>
                 <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-ping"></span>
                 <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
               </div>
               <div>
-                <h3 className="font-bold text-white text-lg leading-tight">New Order!</h3>
-                <p className="text-amber-100 text-xs">{currentNewOrder?.displayId} • {currentNewOrder?.timeAgo}</p>
+                <h3 className="font-bold text-white text-lg leading-tight">
+                  New Order!
+                </h3>
+                <p className="text-amber-100 text-xs">
+                  {currentNewOrder?.displayId} • {currentNewOrder?.timeAgo}
+                </p>
               </div>
             </div>
             {newOrderQueue.length > 1 && (
@@ -727,12 +994,18 @@ export default function AdminDashboard() {
               <div className="flex items-center gap-3">
                 <div
                   className="w-10 h-10 rounded-full bg-gray-200 bg-cover bg-center flex-shrink-0"
-                  style={{ backgroundImage: `url('${currentNewOrder.customer.avatar}')` }}
+                  style={{
+                    backgroundImage: `url('${currentNewOrder.customer.avatar}')`,
+                  }}
                 ></div>
                 <div>
-                  <p className="font-semibold text-sm">{currentNewOrder.customer.name}</p>
+                  <p className="font-semibold text-sm">
+                    {currentNewOrder.customer.name}
+                  </p>
                   {currentNewOrder.customerUsername && (
-                    <p className="text-xs text-muted-foreground">@{currentNewOrder.customerUsername}</p>
+                    <p className="text-xs text-muted-foreground">
+                      @{currentNewOrder.customerUsername}
+                    </p>
                   )}
                 </div>
               </div>
@@ -742,34 +1015,62 @@ export default function AdminDashboard() {
                 {currentNewOrder.items.map((item: any, idx: number) => (
                   <div key={idx} className="flex items-center justify-between">
                     <span className="flex items-center gap-2">
-                      <span className="w-5 h-5 rounded bg-primary/10 text-primary flex items-center justify-center font-bold text-[10px]">{item.quantity}x</span>
+                      <span className="w-5 h-5 rounded bg-primary/10 text-primary flex items-center justify-center font-bold text-[10px]">
+                        {item.quantity}x
+                      </span>
                       <span className="font-medium">{item.name}</span>
                     </span>
-                    <span className="text-muted-foreground">₹{(item.price * item.quantity).toFixed(2)}</span>
+                    <span className="text-muted-foreground">
+                      ₹{(item.price * item.quantity).toFixed(2)}
+                    </span>
                   </div>
                 ))}
                 <div className="border-t pt-2 mt-1 flex justify-between font-bold">
                   <span>Total</span>
-                  <span className="text-primary">{currentNewOrder.displayPrice}</span>
+                  <span className="text-primary">
+                    {currentNewOrder.displayPrice}
+                  </span>
                 </div>
               </div>
 
-              {/* Address */}
-              {currentNewOrder.deliveryAddress && (
-                <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 text-sm">
-                  <p className="text-blue-900 leading-relaxed">
-                    <span className="material-symbols-outlined text-[14px] align-middle mr-1">location_on</span>
-                    {currentNewOrder.deliveryFlat ? `${currentNewOrder.deliveryFlat}, ` : ""}
-                    {currentNewOrder.deliveryAddress}
+              {/* Type and Address */}
+              <div>
+                <div
+                  className={`border rounded-lg p-3 mb-4 ${currentNewOrder.orderType === "Takeaway" ? "bg-purple-50 border-purple-100 text-purple-900" : "bg-orange-50 border-orange-100 text-orange-900"}`}
+                >
+                  <p className="text-sm font-bold">
+                    Order Type: {currentNewOrder.orderType || "Delivery"}
                   </p>
-                  {getMapsLink(currentNewOrder) && (
-                    <a href={getMapsLink(currentNewOrder)!} target="_blank" rel="noreferrer" className="text-blue-600 hover:text-blue-800 text-xs font-medium mt-1 inline-flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[12px]">directions</span>
-                      Open in Maps
-                    </a>
-                  )}
                 </div>
-              )}
+              </div>
+
+              {currentNewOrder.orderType !== "Takeaway" &&
+                currentNewOrder.deliveryAddress && (
+                  <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 text-sm">
+                    <p className="text-blue-900 leading-relaxed">
+                      <span className="material-symbols-outlined text-[14px] align-middle mr-1">
+                        location_on
+                      </span>
+                      {currentNewOrder.deliveryFlat
+                        ? `${currentNewOrder.deliveryFlat}, `
+                        : ""}
+                      {currentNewOrder.deliveryAddress}
+                    </p>
+                    {getMapsLink(currentNewOrder) && (
+                      <a
+                        href={getMapsLink(currentNewOrder)!}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-blue-600 hover:text-blue-800 text-xs font-medium mt-1 inline-flex items-center gap-1"
+                      >
+                        <span className="material-symbols-outlined text-[12px]">
+                          directions
+                        </span>
+                        Open in Maps
+                      </a>
+                    )}
+                  </div>
+                )}
 
               {/* Reject form */}
               {showRejectForm && (
@@ -783,10 +1084,24 @@ export default function AdminDashboard() {
                     autoFocus
                   />
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm" className="flex-1" onClick={() => { setShowRejectForm(false); setRejectReason(""); }}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => {
+                        setShowRejectForm(false);
+                        setRejectReason("");
+                      }}
+                    >
                       Cancel
                     </Button>
-                    <Button variant="destructive" size="sm" className="flex-1" onClick={handleRejectNewOrder} disabled={!rejectReason.trim()}>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      className="flex-1"
+                      onClick={handleRejectNewOrder}
+                      disabled={!rejectReason.trim()}
+                    >
                       Confirm Reject
                     </Button>
                   </div>
@@ -796,30 +1111,45 @@ export default function AdminDashboard() {
               {/* Action buttons */}
               {!showRejectForm && (
                 <div className="space-y-4 pt-1">
-                  <div className="flex flex-col gap-2 bg-primary/5 p-3 rounded-xl border border-primary/20">
-                    <label className="text-sm font-bold text-slate-800">Estimated Prep & Delivery Time</label>
-                    <div className="flex items-center gap-3">
-                      <input 
-                        type="range" 
-                        min="10" 
-                        max="120" 
-                        step="5" 
-                        value={adminTimeEstimate} 
-                        onChange={(e) => setAdminTimeEstimate(parseInt(e.target.value))}
-                        className="flex-1 accent-primary" 
-                      />
-                      <span className="font-bold text-primary whitespace-nowrap bg-white px-3 py-1 rounded-full shadow-sm text-sm border border-primary/10">
-                        {adminTimeEstimate} mins
-                      </span>
+                  {currentNewOrder.orderType !== "Takeaway" && (
+                    <div className="flex flex-col gap-2 bg-primary/5 p-3 rounded-xl border border-primary/20">
+                      <label className="text-sm font-bold text-slate-800">
+                        Estimated Prep & Delivery Time
+                      </label>
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="range"
+                          min="10"
+                          max="120"
+                          step="5"
+                          value={adminTimeEstimate}
+                          onChange={(e) =>
+                            setAdminTimeEstimate(parseInt(e.target.value))
+                          }
+                          className="flex-1 accent-primary"
+                        />
+                        <span className="font-bold text-primary whitespace-nowrap bg-white px-3 py-1 rounded-full shadow-sm text-sm border border-primary/10">
+                          {adminTimeEstimate} mins
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                
+                  )}
+
                   <div className="flex gap-3">
-                    <Button variant="outline" className="flex-1 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 font-bold" onClick={() => setShowRejectForm(true)}>
+                    <Button
+                      variant="outline"
+                      className="flex-1 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 font-bold"
+                      onClick={() => setShowRejectForm(true)}
+                    >
                       Reject
                     </Button>
-                    <Button className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold shadow-md shadow-green-600/20" onClick={handleAcceptNewOrder}>
-                      <span className="material-symbols-outlined text-[18px] mr-1">check</span>
+                    <Button
+                      className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold shadow-md shadow-green-600/20"
+                      onClick={handleAcceptNewOrder}
+                    >
+                      <span className="material-symbols-outlined text-[18px] mr-1">
+                        check
+                      </span>
                       Accept Order
                     </Button>
                   </div>
@@ -828,9 +1158,15 @@ export default function AdminDashboard() {
 
               {/* Next order button */}
               {newOrderQueue.length > 1 && !showRejectForm && (
-                <Button variant="ghost" className="w-full" onClick={handleSkipToNext}>
+                <Button
+                  variant="ghost"
+                  className="w-full"
+                  onClick={handleSkipToNext}
+                >
                   Next Order
-                  <span className="material-symbols-outlined text-[16px] ml-1">arrow_forward</span>
+                  <span className="material-symbols-outlined text-[16px] ml-1">
+                    arrow_forward
+                  </span>
                   <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full ml-2">
                     +{newOrderQueue.length - 1} more
                   </span>
@@ -842,17 +1178,28 @@ export default function AdminDashboard() {
       </Dialog>
 
       {/* ─── STATUS CHANGE CONFIRMATION DIALOG ──────────────────────────── */}
-      <Dialog open={!!statusChangeOrder} onOpenChange={(open) => { if (!open) { setStatusChangeOrder(null); setPendingStatus(null); } }}>
+      <Dialog
+        open={!!statusChangeOrder}
+        onOpenChange={(open) => {
+          if (!open) {
+            setStatusChangeOrder(null);
+            setPendingStatus(null);
+          }
+        }}
+      >
         <DialogContent className="sm:max-w-[420px] gap-0 p-0">
           <DialogHeader className="px-6 pt-6 pb-4 border-b">
             <DialogTitle className="text-lg">Change Order Status</DialogTitle>
             <DialogDescription>
-              {statusChangeOrder?.displayId} — currently <span className="font-bold">{statusChangeOrder?.status}</span>
+              {statusChangeOrder?.displayId} — currently{" "}
+              <span className="font-bold">{statusChangeOrder?.status}</span>
             </DialogDescription>
           </DialogHeader>
           {statusChangeOrder && (
             <div className="px-6 py-5 space-y-3">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Move to:</p>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                Move to:
+              </p>
               <div className="space-y-2">
                 {getForwardStatuses(statusChangeOrder.status).map((s) => {
                   const sc2 = statusColors[s] || statusColors.Pending;
@@ -867,51 +1214,71 @@ export default function AdminDashboard() {
                       }`}
                     >
                       <div className="flex items-center gap-3">
-                        <span className={`w-3 h-3 rounded-full ${sc2.bg} ring-2 ${sc2.ring}`}></span>
+                        <span
+                          className={`w-3 h-3 rounded-full ${sc2.bg} ring-2 ${sc2.ring}`}
+                        ></span>
                         <span>{s}</span>
                       </div>
                       {pendingStatus === s && (
-                        <span className="material-symbols-outlined text-primary text-[18px]">check_circle</span>
+                        <span className="material-symbols-outlined text-primary text-[18px]">
+                          check_circle
+                        </span>
                       )}
                     </button>
                   );
                 })}
-                {statusChangeOrder.status !== "Rejected" && statusChangeOrder.status !== "Delivered" && (
-                  <button
-                    onClick={() => setPendingStatus("Rejected")}
-                    className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 transition-all text-sm font-medium ${
-                      pendingStatus === "Rejected"
-                        ? "border-red-400 bg-red-50 shadow-sm"
-                        : "border-red-100 hover:border-red-200 hover:bg-red-50 text-red-600"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="w-3 h-3 rounded-full bg-red-100 ring-2 ring-red-200"></span>
-                      <span>Rejected</span>
-                    </div>
-                    {pendingStatus === "Rejected" && (
-                      <span className="material-symbols-outlined text-red-500 text-[18px]">check_circle</span>
-                    )}
-                  </button>
-                )}
+                {statusChangeOrder.status !== "Rejected" &&
+                  statusChangeOrder.status !== "Delivered" && (
+                    <button
+                      onClick={() => setPendingStatus("Rejected")}
+                      className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 transition-all text-sm font-medium ${
+                        pendingStatus === "Rejected"
+                          ? "border-red-400 bg-red-50 shadow-sm"
+                          : "border-red-100 hover:border-red-200 hover:bg-red-50 text-red-600"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="w-3 h-3 rounded-full bg-red-100 ring-2 ring-red-200"></span>
+                        <span>Rejected</span>
+                      </div>
+                      {pendingStatus === "Rejected" && (
+                        <span className="material-symbols-outlined text-red-500 text-[18px]">
+                          check_circle
+                        </span>
+                      )}
+                    </button>
+                  )}
               </div>
             </div>
           )}
           <DialogFooter className="px-6 py-4 border-t bg-muted/30">
-            <Button variant="outline" size="sm" onClick={() => { setStatusChangeOrder(null); setPendingStatus(null); }}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setStatusChangeOrder(null);
+                setPendingStatus(null);
+              }}
+            >
               Cancel
             </Button>
             <Button
               size="sm"
               disabled={!pendingStatus}
-              className={pendingStatus === "Rejected" ? "bg-red-600 hover:bg-red-700" : ""}
+              className={
+                pendingStatus === "Rejected"
+                  ? "bg-red-600 hover:bg-red-700"
+                  : ""
+              }
               onClick={() => {
                 if (statusChangeOrder && pendingStatus) {
                   handleStatusChange(statusChangeOrder._id, pendingStatus);
                 }
               }}
             >
-              <span className="material-symbols-outlined text-[16px] mr-1.5">check</span>
+              <span className="material-symbols-outlined text-[16px] mr-1.5">
+                check
+              </span>
               Confirm
             </Button>
           </DialogFooter>

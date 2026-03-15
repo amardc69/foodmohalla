@@ -333,12 +333,7 @@ function MenuContent() {
                             {item.name}
                           </h3>
                         </Link>
-                        <div className="flex items-center gap-1 text-xs font-bold text-slate-700 bg-slate-100 px-2 py-1 rounded-md">
-                          <span className="material-symbols-outlined text-primary text-[14px]">
-                            star
-                          </span>
-                          {item.rating}
-                        </div>
+
                       </div>
                       <p className="text-slate-500 text-sm line-clamp-2 mb-4 flex-1">
                         {item.description}
@@ -475,8 +470,8 @@ function MenuContent() {
                     </DrawerDescription>
                   </DrawerHeader>
                   <div className="flex-1 overflow-y-auto hide-scrollbar">
-                    {/* 3-column grid on desktop, stacked on mobile */}
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-0 lg:gap-8 px-4 sm:px-6 pt-4 pb-6">
+                    {/* 2-column grid on desktop, stacked on mobile */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 lg:gap-8 px-4 sm:px-6 pt-4 pb-6">
                       {/* ─── COLUMN 1: Details, Small Image, Addons, Instructions ── */}
                       <div className="lg:col-span-1 space-y-6">
                         {/* Header: Info + Small Image */}
@@ -489,14 +484,7 @@ function MenuContent() {
                               <span className="text-xl font-black text-primary">
                                 ₹{baseItemPrice.toFixed(2)}
                               </span>
-                              {selectedItemForSheet.rating && (
-                                <span className="flex items-center gap-1 bg-green-50 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                                  <span className="material-symbols-outlined text-[12px]">
-                                    star
-                                  </span>
-                                  {selectedItemForSheet.rating}
-                                </span>
-                              )}
+
                             </div>
                             <p className="text-slate-500 text-xs lg:text-sm leading-relaxed">
                               {selectedItemForSheet.description}
@@ -642,70 +630,7 @@ function MenuContent() {
                         </div>
                       </div>
 
-                      {/* ─── COLUMN 2: Frequently Bought Together (Medium Size) ── */}
-                      <div className="lg:col-span-1 mt-8 lg:mt-0">
-                        <h3 className="font-bold text-sm lg:text-base mb-4 lg:mb-6 pl-1 border-l-4 border-primary/40 text-slate-800">
-                          Complete Your Meal
-                        </h3>
-                        {relatedItems.length > 0 ? (
-                          <div className="grid grid-cols-2 lg:grid-cols-1 gap-3 lg:gap-4">
-                            {relatedItems.map((related: any) => (
-                              <div
-                                key={related.id}
-                                className="flex flex-col lg:flex-row items-center gap-3 bg-white rounded-2xl border border-slate-200 p-2.5 hover:shadow-md hover:border-primary/30 transition-all cursor-pointer group"
-                                onClick={() => openAddSheet(related)}
-                              >
-                                <div className="w-full lg:w-20 h-28 lg:h-20 rounded-xl overflow-hidden bg-slate-100 shrink-0 relative">
-                                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                                  <img
-                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                                    alt={related.name}
-                                    src={related.image}
-                                  />
-                                </div>
-                                <div className="flex-1 min-w-0 flex flex-col justify-center text-center lg:text-left w-full">
-                                  <h4 className="font-bold text-xs lg:text-sm truncate mb-0.5 text-slate-800">
-                                    {related.name}
-                                  </h4>
-                                  <span className="text-xs font-black text-primary mb-2 lg:mb-0">
-                                    ₹{related.price.toFixed(2)}
-                                  </span>
 
-                                  <button
-                                    className="mt-auto lg:hidden w-full py-1.5 flex items-center justify-center bg-slate-100 text-slate-700 text-xs font-bold rounded-lg hover:bg-primary hover:text-white transition-colors"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      openAddSheet(related);
-                                    }}
-                                  >
-                                    Add
-                                  </button>
-                                </div>
-                                <button
-                                  className="hidden lg:flex size-8 items-center justify-center bg-slate-100 text-slate-500 rounded-full hover:bg-primary hover:text-white transition-colors shrink-0 group-hover:shadow-sm"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    openAddSheet(related);
-                                  }}
-                                >
-                                  <span className="material-symbols-outlined text-[18px]">
-                                    add
-                                  </span>
-                                </button>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <div className="flex flex-col items-center justify-center h-40 bg-slate-50 rounded-2xl border border-dashed border-slate-200 text-slate-400">
-                            <span className="material-symbols-outlined text-3xl mb-2 opacity-50">
-                              fastfood
-                            </span>
-                            <p className="text-xs font-medium">
-                              No related items
-                            </p>
-                          </div>
-                        )}
-                      </div>
 
                       {/* ─── COLUMN 3: Order Summary Only ─────────── */}
                       <div className="lg:col-span-1 mt-8 lg:mt-0">
