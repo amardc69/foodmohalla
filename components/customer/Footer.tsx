@@ -5,10 +5,11 @@ export default function CustomerFooter() {
     <footer className="border-t border-slate-200 bg-white pt-16 pb-8 px-4 md:px-10 lg:px-40">
       <div className="flex flex-col md:flex-row justify-between gap-10 mb-12">
         <div className="flex flex-col gap-4 max-w-sm">
-          <div className="flex items-center gap-2 text-primary">
-            <span className="material-symbols-outlined !text-3xl">
-              restaurant_menu
-            </span>
+          <div className="flex items-center gap-2">
+            <div className="size-10 rounded-full overflow-hidden border-2 border-primary/20 flex-shrink-0">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/foodmohalla.jpg" alt="Food Mohalla" className="w-full h-full object-cover" />
+            </div>
             <span className="text-slate-900 text-xl font-extrabold">
               Food Mohalla
             </span>

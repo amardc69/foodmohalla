@@ -37,10 +37,9 @@ export default function CustomerHeader() {
     <>
       <header className="sticky top-0 z-50 flex items-center justify-between whitespace-nowrap px-4 py-3 md:px-8 border-b border-slate-200 bg-white/95 backdrop-blur-sm">
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="size-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
-            <span className="material-symbols-outlined !text-[24px]">
-              restaurant_menu
-            </span>
+          <div className="size-10 rounded-full overflow-hidden border-2 border-primary/20 group-hover:border-primary transition-colors flex-shrink-0">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/foodmohalla.jpg" alt="Food Mohalla" className="w-full h-full object-cover" />
           </div>
           <h2 className="text-slate-900 text-xl font-extrabold tracking-tight hidden sm:block">
             Food Mohalla
