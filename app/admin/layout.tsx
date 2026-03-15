@@ -81,8 +81,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         }`}
       >
         <div className="p-6 flex items-center gap-3">
-          <div className="h-10 w-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
-            <span className="material-symbols-outlined text-2xl">lunch_dining</span>
+          <div className="h-10 w-auto flex-shrink-0">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/foodmohalla.png" alt="Food Mohalla" className="h-full w-auto object-contain" />
           </div>
           <div className="flex flex-col flex-1 min-w-0">
             <h1 className="text-slate-900 text-lg font-extrabold tracking-tight leading-tight truncate">Food Mohalla</h1>
@@ -174,8 +175,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         {/* Mobile Header */}
         <header className="md:hidden flex items-center justify-between p-4 bg-white border-b border-slate-200 sticky top-0 z-20">
           <div className="flex items-center gap-2">
-            <div className="h-8 w-8 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
-              <span className="material-symbols-outlined text-xl">lunch_dining</span>
+            <div className="h-8 w-auto flex-shrink-0">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/foodmohalla.png" alt="Food Mohalla" className="h-full w-auto object-contain" />
             </div>
             <span className="font-extrabold text-lg text-slate-900">Food Mohalla</span>
           </div>

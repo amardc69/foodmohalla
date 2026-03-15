@@ -6,9 +6,9 @@ export default function CustomerFooter() {
       <div className="flex flex-col md:flex-row justify-between gap-10 mb-12">
         <div className="flex flex-col gap-4 max-w-sm">
           <div className="flex items-center gap-2">
-            <div className="size-10 rounded-full overflow-hidden border-2 border-primary/20 flex-shrink-0">
+            <div className="h-10 w-auto flex-shrink-0">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/foodmohalla.jpg" alt="Food Mohalla" className="w-full h-full object-cover" />
+              <img src="/foodmohalla.png" alt="Food Mohalla" className="h-full w-auto object-contain" />
             </div>
             <span className="text-slate-900 text-xl font-extrabold">
               Food Mohalla
