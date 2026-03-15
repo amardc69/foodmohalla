@@ -31,7 +31,7 @@ async function downloadImage(url: string): Promise<{ buffer: Buffer; contentType
     if (!response.ok) return null;
     let contentType = response.headers.get("content-type") || "image/jpeg";
     const arrayBuffer = await response.arrayBuffer();
-    let buffer = Buffer.from(arrayBuffer);
+    let buffer = Buffer.from(arrayBuffer) as Buffer;
 
     // Compress the image with sharp to ensure it's under 1MB.
     // Converting to WebP with quality 80 and a max width/height of 1200 will easily fit under 1MB.
