@@ -55,21 +55,14 @@ export const addCategory = mutation({
     slug: v.string(),
     description: v.optional(v.string()),
     image: v.optional(v.string()),
-    storageId: v.optional(v.id("_storage")),
     icon: v.string(),
   },
   handler: async (ctx, args) => {
-    let imageUrl = args.image;
-    if (args.storageId) {
-      imageUrl = (await ctx.storage.getUrl(args.storageId)) || args.image;
-    }
-
     return await ctx.db.insert("categories", {
       name: args.name,
       slug: args.slug,
       description: args.description || "",
-      image: imageUrl || "",
-      storageId: args.storageId,
+      image: args.image || "",
       icon: args.icon,
     });
   },
@@ -90,21 +83,11 @@ export const updateCategory = mutation({
     icon: v.optional(v.string()),
     description: v.optional(v.string()),
     image: v.optional(v.string()),
-    storageId: v.optional(v.id("_storage")),
   },
   handler: async (ctx, args) => {
-    const { _id, storageId, ...updates } = args;
-    
-    if (storageId) {
-      updates.image = (await ctx.storage.getUrl(storageId)) || updates.image;
-    }
-
+    const { _id, ...updates } = args;
     await ctx.db.patch(_id, updates);
   },
-});
-
-export const generateUploadUrl = mutation(async (ctx) => {
-  return await ctx.storage.generateUploadUrl();
 });
 
 export const addMenuItem = mutation({
@@ -114,7 +97,6 @@ export const addMenuItem = mutation({
     description: v.string(),
     price: v.number(),
     image: v.string(),
-    storageId: v.optional(v.id("_storage")),
     category: v.string(),
     rating: v.number(),
     isVeg: v.boolean(),
@@ -131,17 +113,12 @@ export const addMenuItem = mutation({
     instructions: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
-    let imageUrl = args.image;
-    if (args.storageId) {
-      imageUrl = (await ctx.storage.getUrl(args.storageId)) || args.image;
-    }
-
     return await ctx.db.insert("menuItems", {
       id: args.id,
       name: args.name,
       description: args.description,
       price: args.price,
-      image: imageUrl,
+      image: args.image,
       category: args.category,
       rating: args.rating,
       isVeg: args.isVeg,
@@ -167,7 +144,6 @@ export const updateMenuItem = mutation({
     description: v.optional(v.string()),
     price: v.optional(v.number()),
     image: v.optional(v.string()),
-    storageId: v.optional(v.id("_storage")),
     category: v.optional(v.string()),
     rating: v.optional(v.number()),
     isVeg: v.optional(v.boolean()),
@@ -184,12 +160,7 @@ export const updateMenuItem = mutation({
     instructions: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
-    const { _id, storageId, ...updates } = args;
-    
-    if (storageId) {
-      updates.image = (await ctx.storage.getUrl(storageId)) || updates.image;
-    }
-
+    const { _id, ...updates } = args;
     await ctx.db.patch(_id, updates);
   },
 });

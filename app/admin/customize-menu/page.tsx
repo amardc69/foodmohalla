@@ -13,7 +13,6 @@ export default function CustomizeMenuPage() {
   const addMenuItem = useMutation(api.menu.addMenuItem);
   const updateMenuItem = useMutation(api.menu.updateMenuItem);
   const deleteMenuItem = useMutation(api.menu.deleteMenuItem);
-  const generateUploadUrl = useMutation(api.menu.generateUploadUrl);
   
   const addCategory = useMutation(api.menu.addCategory);
   const updateCategory = useMutation(api.menu.updateCategory);
@@ -160,7 +159,7 @@ export default function CustomizeMenuPage() {
     setUploading(true);
     
     try {
-      let storageId = undefined;
+      let imageUrl = formData.image;
       if (selectedFile) {
         const options = {
           maxSizeMB: 0.1,
@@ -169,14 +168,25 @@ export default function CustomizeMenuPage() {
         };
         const compressedFile = await imageCompression(selectedFile, options);
         
-        const postUrl = await generateUploadUrl();
-        const result = await fetch(postUrl, {
+        // Get presigned URL from our API
+        const urlRes = await fetch("/api/upload", {
           method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            fileName: compressedFile.name,
+            contentType: compressedFile.type,
+            folder: "menu-items",
+          }),
+        });
+        const { presignedUrl, publicUrl } = await urlRes.json();
+        
+        // Upload directly to R2
+        await fetch(presignedUrl, {
+          method: "PUT",
           headers: { "Content-Type": compressedFile.type },
           body: compressedFile,
         });
-        const { storageId: uploadedStorageId } = await result.json();
-        storageId = uploadedStorageId;
+        imageUrl = publicUrl;
       }
 
       if (editingId) {
@@ -184,13 +194,13 @@ export default function CustomizeMenuPage() {
         const { id: _id, rating: _rating, ...updateData } = formData;
         await updateMenuItem({
           _id: editingId,
-          storageId,
           ...updateData,
+          image: imageUrl,
         });
       } else {
         await addMenuItem({
           ...formData,
-          storageId,
+          image: imageUrl,
         });
       }
       setIsEditing(false);
@@ -285,7 +295,6 @@ export default function CustomizeMenuPage() {
     
     setCategoryUploading(true);
     try {
-      let storageId = undefined;
       let imageUrl = "";
 
       if (selectedCategoryImage) {
@@ -296,14 +305,25 @@ export default function CustomizeMenuPage() {
         };
         const compressedFile = await imageCompression(selectedCategoryImage, options);
         
-        const postUrl = await generateUploadUrl();
-        const result = await fetch(postUrl, {
+        // Get presigned URL from our API
+        const urlRes = await fetch("/api/upload", {
           method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            fileName: compressedFile.name,
+            contentType: compressedFile.type,
+            folder: "categories",
+          }),
+        });
+        const { presignedUrl, publicUrl } = await urlRes.json();
+        
+        // Upload directly to R2
+        await fetch(presignedUrl, {
+          method: "PUT",
           headers: { "Content-Type": compressedFile.type },
           body: compressedFile,
         });
-        const { storageId: uploadedStorageId } = await result.json();
-        storageId = uploadedStorageId;
+        imageUrl = publicUrl;
       }
 
       const slug = newCategoryName.toLowerCase().replace(/\s+/g, '-');
@@ -314,15 +334,14 @@ export default function CustomizeMenuPage() {
           name: newCategoryName,
           slug,
           icon: newCategoryIcon,
-          storageId: storageId,
+          ...(imageUrl ? { image: imageUrl } : {}),
         });
       } else {
         await addCategory({
           name: newCategoryName,
           slug,
           description: "",
-          image: "", // Gets managed dynamically if passed storageId
-          storageId: storageId,
+          image: imageUrl,
           icon: newCategoryIcon
         });
       }
