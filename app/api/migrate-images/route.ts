@@ -2,10 +2,12 @@ import { NextResponse } from "next/server";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
+import sharp from "sharp";
 
 /**
  * ONE-TIME MIGRATION SCRIPT
- * Downloads images from Convex storage URLs and re-uploads them to Cloudflare R2.
+ * Downloads images from Convex storage URLs, compresses them using sharp 
+ * to ensure they are under 1MB, and re-uploads them to Cloudflare R2.
  * Updates the Convex database records with new R2 URLs.
  *
  * Run by visiting: GET /api/migrate-images (or via curl)
@@ -27,9 +29,23 @@ async function downloadImage(url: string): Promise<{ buffer: Buffer; contentType
   try {
     const response = await fetch(url);
     if (!response.ok) return null;
-    const contentType = response.headers.get("content-type") || "image/jpeg";
+    let contentType = response.headers.get("content-type") || "image/jpeg";
     const arrayBuffer = await response.arrayBuffer();
-    return { buffer: Buffer.from(arrayBuffer), contentType };
+    let buffer = Buffer.from(arrayBuffer);
+
+    // Compress the image with sharp to ensure it's under 1MB.
+    // Converting to WebP with quality 80 and a max width/height of 1200 will easily fit under 1MB.
+    try {
+      buffer = await sharp(buffer)
+        .resize(1200, 1200, { fit: "inside", withoutEnlargement: true })
+        .webp({ quality: 80 })
+        .toBuffer();
+      contentType = "image/webp";
+    } catch (sharpErr) {
+      console.warn(`Sharp compression failed for ${url}, proceeding with uncompressed buffer.`, sharpErr);
+    }
+
+    return { buffer, contentType };
   } catch (err) {
     console.error(`Failed to download: ${url}`, err);
     return null;
@@ -38,7 +54,8 @@ async function downloadImage(url: string): Promise<{ buffer: Buffer; contentType
 
 async function uploadToR2(buffer: Buffer, contentType: string, folder: string): Promise<string> {
   const ext = contentType.split("/")[1] || "jpeg";
-  const key = `${folder}/${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${ext}`;
+  let keyExt = ext === "webp" ? "webp" : ext;
+  const key = `${folder}/${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${keyExt}`;
 
   await s3.send(
     new PutObjectCommand({

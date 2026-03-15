@@ -162,7 +162,7 @@ export default function CustomizeMenuPage() {
       let imageUrl = formData.image;
       if (selectedFile) {
         const options = {
-          maxSizeMB: 0.1,
+          maxSizeMB: 1,
           maxWidthOrHeight: 800,
           useWebWorker: true,
         };
@@ -299,7 +299,7 @@ export default function CustomizeMenuPage() {
 
       if (selectedCategoryImage) {
         const options = {
-          maxSizeMB: 0.1,
+          maxSizeMB: 1,
           maxWidthOrHeight: 800,
           useWebWorker: true,
         };
