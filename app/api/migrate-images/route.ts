@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
 import sharp from "sharp";
@@ -27,6 +27,37 @@ const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 async function downloadImage(url: string): Promise<{ buffer: Buffer; contentType: string } | null> {
   try {
+    // If it's a public R2 URL, we can fetch it securely via the S3 SDK to bypass Cloudflare bot protection
+    if (url.includes(process.env.R2_PUBLIC_URL!)) {
+      // Extract the key from the public URL (e.g. "menu-items/123-abc.webp")
+      const key = url.replace(`${process.env.R2_PUBLIC_URL}/`, "");
+      
+      const response = await s3.send(new GetObjectCommand({
+        Bucket: process.env.R2_BUCKET_NAME!,
+        Key: key
+      }));
+      
+      const byteArray = await response.Body?.transformToByteArray();
+      if (!byteArray) throw new Error("Empty body from S3 GetObject");
+      
+      let contentType = response.ContentType || "image/jpeg";
+      let buffer = Buffer.from(byteArray) as Buffer;
+
+      // Compress the image with sharp to ensure it's under 1MB.
+      try {
+        buffer = await sharp(buffer)
+          .resize(1200, 1200, { fit: "inside", withoutEnlargement: true })
+          .webp({ quality: 80 })
+          .toBuffer();
+        contentType = "image/webp";
+      } catch (sharpErr) {
+        console.warn(`Sharp compression failed for ${url}, proceeding with uncompressed buffer.`, sharpErr);
+      }
+
+      return { buffer, contentType };
+    }
+
+    // Fallback for Convex URLs (which don't have this bot protection issue)
     const response = await fetch(url, {
       headers: {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
