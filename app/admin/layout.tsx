@@ -81,7 +81,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         }`}
       >
         <div className="p-6 flex items-center gap-3">
-          <div className="h-10 w-auto flex-shrink-0">
+          <div className="h-12 w-auto flex-shrink-0">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/foodmohalla.png" alt="Food Mohalla" className="h-full w-auto object-contain" />
           </div>
@@ -175,7 +175,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         {/* Mobile Header */}
         <header className="md:hidden flex items-center justify-between p-4 bg-white border-b border-slate-200 sticky top-0 z-20">
           <div className="flex items-center gap-2">
-            <div className="h-8 w-auto flex-shrink-0">
+            <div className="h-12 w-auto flex-shrink-0">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/foodmohalla.png" alt="Food Mohalla" className="h-full w-auto object-contain" />
             </div>

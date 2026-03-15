@@ -37,7 +37,7 @@ export default function CustomerHeader() {
     <>
       <header className="sticky top-0 z-50 flex items-center justify-between whitespace-nowrap px-4 py-3 md:px-8 border-b border-slate-200 bg-white/95 backdrop-blur-sm">
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="h-10 w-auto flex-shrink-0">
+          <div className="h-14 w-auto flex-shrink-0">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/foodmohalla.png" alt="Food Mohalla" className="h-full w-auto object-contain" />
           </div>

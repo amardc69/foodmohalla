@@ -588,7 +588,7 @@ export default function CustomizeMenuPage() {
               )}
               <div className="absolute top-2 left-2 flex flex-col gap-1 z-10">
                  {item.isBestSeller && <span className="px-2 py-0.5 bg-yellow-400 text-yellow-900 text-[10px] font-bold rounded shadow-sm">BEST SELLER</span>}
-                 {item.isFeatured && <span className="px-2 py-0.5 bg-foodmohalla-500 text-white text-[10px] font-bold rounded shadow-sm">FEATURED</span>}
+                 {item.isFeatured && <span className="px-2 py-0.5 bg-primary text-white text-[10px] font-bold rounded shadow-sm">FEATURED</span>}
               </div>
               
               <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm p-1 rounded cursor-default shadow-sm border border-gray-100">
@@ -637,8 +637,8 @@ export default function CustomizeMenuPage() {
                   onClick={(e) => { e.stopPropagation(); updateMenuItem({ _id: item._id, isFeatured: !item.isFeatured }); }}
                   className={`px-2 py-1 rounded-md text-[10px] font-bold transition-colors cursor-pointer border ${
                     item.isFeatured
-                      ? "bg-foodmohalla-50 text-foodmohalla-600 border-foodmohalla-200"
-                      : "bg-gray-50 text-gray-400 border-gray-200 hover:border-foodmohalla-200 hover:text-foodmohalla-500"
+                      ? "bg-slate-50 text-primary border-primary/20"
+                      : "bg-gray-50 text-gray-400 border-gray-200 hover:border-primary/20 hover:text-primary"
                   }`}
                 >
                   ◆ Featured

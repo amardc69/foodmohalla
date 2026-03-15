@@ -32,9 +32,9 @@ const statusColors: Record<string, { bg: string; text: string; ring: string }> =
       ring: "ring-blue-200",
     },
     "Out for Delivery": {
-      bg: "bg-foodmohalla-50",
-      text: "text-foodmohalla-600",
-      ring: "ring-foodmohalla-200",
+      bg: "bg-purple-50",
+      text: "text-purple-600",
+      ring: "ring-purple-200",
     },
     Delivered: {
       bg: "bg-green-50",
@@ -850,10 +850,10 @@ export default function AdminDashboard() {
                   Order Type
                 </h4>
                 <div
-                  className={`border rounded-lg p-3 mb-4 ${selectedOrder.orderType === "Takeaway" ? "bg-purple-50 border-purple-100 dark:bg-purple-950/20 dark:border-purple-900" : "bg-foodmohalla-50 border-foodmohalla-100 dark:bg-foodmohalla-950/20 dark:border-foodmohalla-900"}`}
+                  className={`border rounded-lg p-3 mb-4 ${selectedOrder.orderType === "Takeaway" ? "bg-purple-50 border-purple-100 dark:bg-purple-950/20 dark:border-purple-900" : "bg-slate-50 border-slate-200 dark:bg-slate-800 dark:border-slate-700"}`}
                 >
                   <p
-                    className={`text-sm font-bold ${selectedOrder.orderType === "Takeaway" ? "text-purple-900 dark:text-purple-100" : "text-foodmohalla-900 dark:text-foodmohalla-100"}`}
+                    className={`text-sm font-bold ${selectedOrder.orderType === "Takeaway" ? "text-purple-900 dark:text-purple-100" : "text-slate-900 dark:text-slate-100"}`}
                   >
                     {selectedOrder.orderType || "Delivery"}
                   </p>
@@ -963,7 +963,7 @@ export default function AdminDashboard() {
           showCloseButton={false}
         >
           {/* Custom gradient header */}
-          <div className="bg-gradient-to-r from-amber-500 to-foodmohalla-500 px-6 py-4 rounded-t-lg flex items-center justify-between">
+          <div className="bg-gradient-to-r from-slate-800 to-slate-900 px-6 py-4 rounded-t-lg flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="relative">
                 <span className="material-symbols-outlined text-white text-2xl">
@@ -1036,7 +1036,7 @@ export default function AdminDashboard() {
               {/* Type and Address */}
               <div>
                 <div
-                  className={`border rounded-lg p-3 mb-4 ${currentNewOrder.orderType === "Takeaway" ? "bg-purple-50 border-purple-100 text-purple-900" : "bg-foodmohalla-50 border-foodmohalla-100 text-foodmohalla-900"}`}
+                  className={`border rounded-lg p-3 mb-4 ${currentNewOrder.orderType === "Takeaway" ? "bg-purple-50 border-purple-100 text-purple-900" : "bg-slate-50 border-slate-200 text-slate-900"}`}
                 >
                   <p className="text-sm font-bold">
                     Order Type: {currentNewOrder.orderType || "Delivery"}

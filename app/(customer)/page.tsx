@@ -12,7 +12,7 @@ export default function HomePage() {
       {/* Hero Section */}
       <div className="w-full mt-10">
         <div className="p-4 md:p-6 lg:px-40 lg:py-8">
-          <div className="relative flex min-h-[480px] flex-col gap-6 overflow-hidden rounded-3xl bg-slate-900 items-center justify-center p-8 md:p-16 text-center shadow-xl shadow-foodmohalla-900/10">
+          <div className="relative flex min-h-[480px] flex-col gap-6 overflow-hidden rounded-3xl bg-slate-900 items-center justify-center p-8 md:p-16 text-center shadow-xl shadow-slate-900/10">
             <div
               className="absolute inset-0 z-0 bg-cover bg-center"
               style={{
@@ -86,7 +86,7 @@ export default function HomePage() {
                       <p className="text-slate-900 text-lg font-bold leading-normal">
                         {cat.name}
                       </p>
-                      <div className="bg-foodmohalla-100 text-primary p-1 rounded-full">
+                      <div className="bg-slate-100 text-primary p-1 rounded-full group-hover:bg-primary group-hover:text-white transition-colors">
                         <span className="material-symbols-outlined !text-base block">
                           arrow_forward
                         </span>
@@ -147,7 +147,7 @@ export default function HomePage() {
                 ].map((feature) => (
                   <div
                     key={feature.title}
-                    className="flex flex-col gap-4 p-6 rounded-2xl bg-background-light hover:bg-foodmohalla-50 transition-colors group"
+                    className="flex flex-col gap-4 p-6 rounded-2xl bg-slate-50 border border-transparent hover:border-slate-200 hover:bg-white hover:shadow-sm transition-all group"
                   >
                     <div className="w-12 h-12 rounded-xl bg-white shadow-sm flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
                       <span className="material-symbols-outlined">
