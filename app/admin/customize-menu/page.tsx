@@ -892,6 +892,7 @@ export default function CustomizeMenuPage() {
               </div>
 
               {/* Sizes section */}
+              {formData.isSizeBased && (
               <div>
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-sm font-bold text-text-main uppercase tracking-wider">Sizes</h3>
@@ -942,6 +943,7 @@ export default function CustomizeMenuPage() {
                   </div>
                 )}
               </div>
+              )}
 
               <div>
                 <div className="flex justify-between items-center mb-4">
