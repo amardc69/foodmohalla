@@ -11,6 +11,7 @@ export default defineSchema({
     category: v.string(),
     rating: v.number(),
     isVeg: v.boolean(),
+    isSizeBased: v.optional(v.boolean()),
     isHot: v.optional(v.boolean()),
     badge: v.optional(v.string()),
     sizes: v.optional(v.array(v.object({ name: v.string(), price: v.number() }))),

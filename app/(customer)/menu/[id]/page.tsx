@@ -24,10 +24,36 @@ export default function ProductPage() {
   const item: any = useQuery(api.menu.getMenuItemById, { id: params.id as string });
   const relatedItems = useQuery(api.menu.getMenuItems, {})?.slice(0, 3) || [];
 
+  const addFavourite = useMutation(api.favourites.addFavourite);
+  const removeFavourite = useMutation(api.favourites.removeFavourite);
+  const userFavourites = useQuery(
+    api.favourites.getUserFavourites,
+    userId ? { userId } : "skip"
+  );
+
   const [quantity, setQuantity] = useState(1);
   const [selectedAddons, setSelectedAddons] = useState<string[]>([]);
   const [selectedInstructions, setSelectedInstructions] = useState<string[]>([]);
+  const [selectedSize, setSelectedSize] = useState<string>("");
   const [isAdding, setIsAdding] = useState(false);
+
+  useEffect(() => {
+    if (item?.sizes?.length > 0 && !selectedSize) {
+      setSelectedSize(item.sizes[0].name);
+    }
+  }, [item, selectedSize]);
+
+  async function handleToggleFavourite(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!userId || !item) return;
+    const isFav = userFavourites?.some((f: any) => f.id === item.id);
+    if (isFav) {
+      await removeFavourite({ userId, menuItemId: item.id });
+    } else {
+      await addFavourite({ userId, menuItemId: item.id });
+    }
+  }
 
   function toggleAddon(addon: string) {
     setSelectedAddons((prev) =>
@@ -52,7 +78,11 @@ export default function ProductPage() {
     const itemAddons = item.addons || [];
     const enrichedAddons = selectedAddons.map(name => {
       const addon = itemAddons.find((a: any) => a.name === name);
-      return { name, price: addon?.price || 0 };
+      let addonPrice = addon?.price || 0;
+      if (selectedSize && addon?.sizePrices && addon.sizePrices[selectedSize] !== undefined) {
+        addonPrice = addon.sizePrices[selectedSize];
+      }
+      return { name, price: addonPrice };
     });
     
     await addToCartMutation({
@@ -61,21 +91,32 @@ export default function ProductPage() {
       quantity,
       addons: enrichedAddons,
       instructions: selectedInstructions,
+      selectedSize: selectedSize || undefined,
     });
 
     setTimeout(() => {
       setIsAdding(false);
-      router.push("/checkout");
-    }, 600);
+    }, 2000);
+  }
+
+  const hasSizes = item?.sizes && item.sizes.length > 0;
+  let baseItemPrice = item?.price || 0;
+  if (hasSizes && selectedSize) {
+    const sizeObj = item.sizes.find((s: any) => s.name === selectedSize);
+    if (sizeObj) baseItemPrice = sizeObj.price;
   }
 
   const addonTotal = selectedAddons.reduce((sum, name) => {
     const itemAddons = item?.addons || [];
     const addon = itemAddons.find((a: any) => a.name === name);
-    return sum + (addon?.price || 0);
+    let aPrice = addon?.price || 0;
+    if (hasSizes && selectedSize && addon?.sizePrices?.[selectedSize] !== undefined) {
+      aPrice = addon.sizePrices[selectedSize];
+    }
+    return sum + aPrice;
   }, 0);
 
-  const totalPrice = item ? (item.price + addonTotal) * quantity : 0;
+  const totalPrice = item ? (baseItemPrice + addonTotal) * quantity : 0;
 
   if (item === undefined) {
     return (
@@ -131,8 +172,15 @@ export default function ProductPage() {
                 <span className="size-2 rounded-full bg-green-600"></span> Veg
               </div>
             )}
-            <button className="absolute top-4 right-4 p-2 bg-white/90 backdrop-blur-sm rounded-full hover:text-red-500 transition-colors">
-              <span className="material-symbols-outlined">favorite</span>
+            <button 
+              onClick={handleToggleFavourite}
+              className="absolute top-4 right-4 p-2 bg-white/90 backdrop-blur-sm rounded-full text-slate-400 hover:text-red-500 transition-colors shadow-sm"
+            >
+              <span className={`material-symbols-outlined ${userFavourites?.some((f: any) => f.id === item.id) ? "fill-current text-red-500" : ""}`}
+                style={userFavourites?.some((f: any) => f.id === item.id) ? { fontVariationSettings: "'FILL' 1" } : {}}
+              >
+                favorite
+              </span>
             </button>
           </div>
 
@@ -185,25 +233,22 @@ export default function ProductPage() {
                   {item.name}
                 </h1>
                 <div className="flex flex-col items-end">
-                  <span className="text-2xl font-bold text-primary">
-                    ₹{item.price.toFixed(2)}
-                  </span>
+                  {item.isSizeBased && item.sizes?.length > 0 ? (
+                    <span className="text-2xl font-bold text-primary flex items-center gap-1">
+                      <span className="text-sm text-slate-500 font-medium">From</span>
+                      ₹{Math.min(...item.sizes.map((s: any) => s.price)).toFixed(2)}
+                    </span>
+                  ) : (
+                    <span className="text-2xl font-bold text-primary">
+                      ₹{item.price.toFixed(2)}
+                    </span>
+                  )}
                 </div>
               </div>
               <p className="mt-4 text-text-muted leading-relaxed">
                 {item.description}
               </p>
               <div className="flex items-center gap-6 mt-4 pb-6 border-b border-neutral-light">
-                <div className="flex items-center gap-1">
-                  <span
-                    className="material-symbols-outlined text-yellow-500"
-                    style={{ fontVariationSettings: "'FILL' 1" }}
-                  >
-                    star
-                  </span>
-                  <span className="font-bold">{item.rating}</span>
-                  <span className="text-text-muted text-sm">(1.2k+ reviews)</span>
-                </div>
                 <div className="flex items-center gap-1 text-text-muted">
                   <span className="material-symbols-outlined text-lg">
                     schedule
@@ -218,6 +263,36 @@ export default function ProductPage() {
                 </div>
               </div>
             </div>
+
+            {/* Sizes */}
+            {hasSizes && (
+              <div className="space-y-3">
+                <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
+                  Choose Size
+                  <span className="text-[10px] font-bold text-white bg-primary px-2 py-0.5 rounded-full shadow-sm">
+                    Required
+                  </span>
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {item.sizes.map((size: any) => (
+                    <button
+                      key={size.name}
+                      onClick={() => setSelectedSize(size.name)}
+                      className={`px-4 py-3 rounded-xl text-sm font-bold border-2 transition-all flex flex-col items-start ${
+                        selectedSize === size.name
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "border-neutral-light text-slate-600 hover:border-primary/50"
+                      }`}
+                    >
+                      {size.name}
+                      <span className="block text-xs font-normal mt-0.5 opacity-80 gap-1">
+                        ₹{size.price.toFixed(2)}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Add-ons */}
             <div className="space-y-6">
@@ -249,7 +324,9 @@ export default function ProductPage() {
                         <span className="text-sm font-medium">{addon.name}</span>
                       </div>
                       <span className="text-sm text-text-muted">
-                        +₹{addon.price.toFixed(2)}
+                        +₹{(hasSizes && selectedSize && addon?.sizePrices?.[selectedSize] !== undefined)
+                          ? addon.sizePrices[selectedSize].toFixed(2)
+                          : addon.price.toFixed(2)}
                       </span>
                     </label>
                   ))}

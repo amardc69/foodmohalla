@@ -84,6 +84,7 @@ export default function CustomizeMenuPage() {
     category: "",
     rating: 0,
     isVeg: true,
+    isSizeBased: false,
     isHot: false,
     badge: "",
     discount: 0,
@@ -110,6 +111,7 @@ export default function CustomizeMenuPage() {
       category: item.category,
       rating: item.rating,
       isVeg: item.isVeg,
+      isSizeBased: item.isSizeBased || false,
       isHot: item.isHot || false,
       badge: item.badge || "",
       discount: item.discount || 0,
@@ -136,6 +138,7 @@ export default function CustomizeMenuPage() {
       category: categoriesDb[0]?.slug || "",
       rating: 5.0,
       isVeg: true,
+      isSizeBased: false,
       isHot: false,
       badge: "",
       discount: 0,
@@ -727,18 +730,20 @@ export default function CustomizeMenuPage() {
                     />
                   </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-bold text-text-muted mb-2">Price (₹)</label>
-                  <input
-                    required
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary outline-none"
-                    value={formData.price}
-                    onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
-                  />
-                </div>
+                {!formData.isSizeBased && (
+                  <div>
+                    <label className="block text-sm font-bold text-text-muted mb-2">Price (₹)</label>
+                    <input
+                      required
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary outline-none"
+                      value={formData.price}
+                      onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
+                    />
+                  </div>
+                )}
                 <div>
                   <label className="block text-sm font-bold text-text-muted mb-2">Category</label>
                   <select
@@ -809,6 +814,16 @@ export default function CustomizeMenuPage() {
                       onChange={(e) => setFormData({ ...formData, isOutOfStock: e.target.checked })}
                     />
                     <span className="text-sm font-semibold">Out of Stock</span>
+                  </label>
+
+                  <label className="flex items-center gap-3 cursor-pointer p-3 border border-gray-200 bg-white rounded-lg hover:bg-gray-50 transition-colors">
+                    <input
+                      type="checkbox"
+                      className="w-5 h-5 accent-primary"
+                      checked={formData.isSizeBased}
+                      onChange={(e) => setFormData({ ...formData, isSizeBased: e.target.checked })}
+                    />
+                    <span className="text-sm font-semibold">Size-Based Item</span>
                   </label>
 
                   <label className="flex items-center gap-3 cursor-pointer p-3 border border-gray-200 bg-white rounded-lg hover:bg-gray-50 transition-colors">

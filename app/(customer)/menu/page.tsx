@@ -321,6 +321,7 @@ function MenuContent() {
                       >
                         <span
                           className={`material-symbols-outlined text-[20px] ${userFavourites?.some((f: any) => f.id === item.id) ? "fill-current text-red-500" : ""}`}
+                          style={userFavourites?.some((f: any) => f.id === item.id) ? { fontVariationSettings: "'FILL' 1" } : {}}
                         >
                           favorite
                         </span>
@@ -339,9 +340,16 @@ function MenuContent() {
                         {item.description}
                       </p>
                       <div className="flex items-center justify-between mt-auto">
-                        <span className="text-lg font-bold text-slate-900">
-                          ₹{item.price.toFixed(2)}
-                        </span>
+                        {item.isSizeBased && item.sizes?.length > 0 ? (
+                          <span className="text-lg font-bold text-slate-900 flex items-center gap-1">
+                            <span className="text-xs text-slate-500 font-medium">From</span>
+                            ₹{Math.min(...item.sizes.map((s: any) => s.price)).toFixed(2)}
+                          </span>
+                        ) : (
+                          <span className="text-lg font-bold text-slate-900">
+                            ₹{item.price.toFixed(2)}
+                          </span>
+                        )}
                         {(() => {
                           const cartItem = cartItems?.find(
                             (ci) =>

@@ -59,6 +59,7 @@ const STATUS_RANK: Record<string, number> = {
 };
 
 function getForwardStatuses(currentStatus: string): string[] {
+  if (currentStatus === "Rejected" || currentStatus === "Delivered") return [];
   const currentRank = STATUS_RANK[currentStatus] ?? -1;
   return statusFlow.filter((s) => (STATUS_RANK[s] ?? -1) > currentRank);
 }
@@ -630,10 +631,8 @@ export default function AdminDashboard() {
                     <td className="px-6 py-4">
                       {(() => {
                         const forwardOptions = getForwardStatuses(order.status);
-                        const canChange =
-                          forwardOptions.length > 0 ||
-                          (order.status !== "Delivered" &&
-                            order.status !== "Rejected");
+                        const canChange = order.status !== "Rejected" && order.status !== "Delivered" &&
+                          (forwardOptions.length > 0 || order.status === "Pending");
                         return (
                           <button
                             onClick={(e) => {
