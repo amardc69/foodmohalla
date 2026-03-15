@@ -193,7 +193,7 @@ function ProfileContent() {
                       <div className="flex items-start justify-between">
                         <h4 className="font-bold text-slate-900 line-clamp-1">{item.name}</h4>
                       </div>
-                      <p className="text-sm font-semibold text-primary mt-1">${item.price.toFixed(2)}</p>
+                      <p className="text-sm font-semibold text-primary mt-1">₹{item.price.toFixed(2)}</p>
                       <Link href={`/menu`} className="mt-2 text-xs font-bold text-slate-500 hover:text-primary transition-colors flex items-center gap-1 w-fit">
                         Order now <span className="material-symbols-outlined !text-[14px]">arrow_forward</span>
                       </Link>

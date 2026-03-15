@@ -240,6 +240,40 @@ function MenuContent() {
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
+          
+          {/* Mobile Categories (Horizontal Scroll) */}
+          <div className="lg:hidden w-full overflow-x-auto pb-2 scrollbar-hide">
+            <div className="flex gap-2 w-max">
+              <button
+                onClick={() => setActiveCategory("")}
+                className={`px-4 py-2 rounded-full text-sm whitespace-nowrap transition-colors ${
+                  !activeCategory
+                    ? "bg-primary text-white font-bold shadow-md"
+                    : "bg-white border border-gray-200 text-slate-600 font-medium"
+                }`}
+              >
+                All Items
+              </button>
+              {categoriesDb.map((cat: any) => (
+                <button
+                  key={cat.slug}
+                  onClick={() =>
+                    setActiveCategory(cat.slug === activeCategory ? "" : cat.slug)
+                  }
+                  className={`px-4 py-2 rounded-full text-sm whitespace-nowrap transition-colors flex items-center gap-1.5 ${
+                    activeCategory === cat.slug
+                      ? "bg-primary text-white font-bold shadow-md"
+                      : "bg-white border border-gray-200 text-slate-600 font-medium"
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-[16px]">
+                    {cat.icon || "restaurant_menu"}
+                  </span>
+                  {cat.name}
+                </button>
+              ))}
+            </div>
+          </div>
           {/* Veg Only Switch - commented out
           <div className="flex items-center gap-4">
             <label className="flex items-center cursor-pointer gap-2 select-none group">

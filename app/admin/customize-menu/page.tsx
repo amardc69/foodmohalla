@@ -821,7 +821,14 @@ export default function CustomizeMenuPage() {
                       type="checkbox"
                       className="w-5 h-5 accent-primary"
                       checked={formData.isSizeBased}
-                      onChange={(e) => setFormData({ ...formData, isSizeBased: e.target.checked })}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        if (!checked) {
+                          setFormData({ ...formData, isSizeBased: checked, sizes: [] });
+                        } else {
+                          setFormData({ ...formData, isSizeBased: checked });
+                        }
+                      }}
                     />
                     <span className="text-sm font-semibold">Size-Based Item</span>
                   </label>

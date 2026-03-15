@@ -201,13 +201,18 @@ export default function CheckoutPage() {
     setNewLng(undefined);
   }
 
-  // Compute addon total for a single cart item
   function getItemTotal(item: any): number {
+    let basePrice = item.menuItem.price || 0;
+    if (item.selectedSize && item.menuItem.sizes && item.menuItem.sizes.length > 0) {
+      const sizeObj = item.menuItem.sizes.find((s:any) => s.name === item.selectedSize);
+      if (sizeObj) basePrice = sizeObj.price;
+    }
+    
     let addonSum = 0;
     if (item.addons && item.addons.length > 0) {
       addonSum = item.addons.reduce((sum: number, a: any) => sum + (a.price || 0), 0);
     }
-    return (item.menuItem.price + addonSum) * item.quantity;
+    return (basePrice + addonSum) * item.quantity;
   }
 
   const currentDeliveryFee = orderType === "Takeaway" ? 0 : (freeDeliveryEnabled && total >= freeDeliveryThreshold ? 0 : DELIVERY_FEE);
@@ -217,15 +222,22 @@ export default function CheckoutPage() {
     if (!userId || cart.length === 0) return;
     setIsPlacing(true);
     
-    const formattedItems = cart.map((c: any) => ({
-      menuItemId: c.menuItem.id,
-      name: c.menuItem.name,
-      quantity: c.quantity,
-      price: c.menuItem.price,
-      selectedSize: c.selectedSize,
-      addons: c.addons || [],
-      instructions: c.instructions || [],
-    }));
+    const formattedItems = cart.map((c: any) => {
+      let basePrice = c.menuItem.price || 0;
+      if (c.selectedSize && c.menuItem.sizes && c.menuItem.sizes.length > 0) {
+        const sizeObj = c.menuItem.sizes.find((s:any) => s.name === c.selectedSize);
+        if (sizeObj) basePrice = sizeObj.price;
+      }
+      return {
+        menuItemId: c.menuItem.id,
+        name: c.menuItem.name,
+        quantity: c.quantity,
+        price: basePrice,
+        selectedSize: c.selectedSize,
+        addons: c.addons || [],
+        instructions: c.instructions || [],
+      };
+    });
     
     const orderId = await createOrder({
       items: formattedItems,
@@ -476,14 +488,21 @@ export default function CheckoutPage() {
                         <div className="text-sm">
                           <div className="flex items-center gap-1.5">
                             {item.menuItem.isVeg && (
-                              <span className="w-3 h-3 border border-green-600 flex items-center justify-center p-[1px] rounded-[2px]">
+                              <span className="w-3 h-3 border border-green-600 flex items-center justify-center p-[1px] rounded-[2px] shrink-0">
                                 <span className="w-1.5 h-1.5 bg-green-600 rounded-full"></span>
                               </span>
                             )}
-                            <span className="font-semibold text-text-main">{item.menuItem.name}</span>
+                            <span className="font-semibold text-text-main leading-tight">{item.menuItem.name}</span>
                           </div>
+                          {item.selectedSize && (
+                            <span className="text-xs font-bold text-primary mt-1 block">Size: {item.selectedSize}</span>
+                          )}
                           {item.addons && item.addons.length > 0 && (
-                            <p className="text-xs text-text-muted mt-0.5">{item.addons.map((a: any) => a.name).join(", ")}</p>
+                            <div className="text-xs text-text-muted mt-1 space-y-0.5">
+                              {item.addons.map((a: any, idx: number) => (
+                                <p key={idx}>+ {a.name} (₹{a.price.toFixed(2)})</p>
+                              ))}
+                            </div>
                           )}
                           <div className="mt-1 flex items-center gap-3">
                             <div className="flex items-center border border-gray-200 rounded bg-white">
