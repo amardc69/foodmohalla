@@ -81,7 +81,7 @@ export async function GET() {
     const menuItems = await convex.query(api.menu.getMenuItems, {});
 
     for (const item of menuItems) {
-      if (!item.image || !isConvexUrl(item.image)) {
+      if (!item.image) {
         results.push({ type: "menuItem", name: item.name, status: "skipped", oldUrl: item.image });
         continue;
       }
@@ -114,7 +114,7 @@ export async function GET() {
     const categories = await convex.query(api.menu.getCategories, {});
 
     for (const cat of categories) {
-      if (!cat.image || !isConvexUrl(cat.image)) {
+      if (!cat.image) {
         results.push({ type: "category", name: cat.name, status: "skipped", oldUrl: cat.image });
         continue;
       }
