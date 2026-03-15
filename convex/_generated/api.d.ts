@@ -15,6 +15,7 @@ import type * as categories from "../categories.js";
 import type * as favourites from "../favourites.js";
 import type * as init from "../init.js";
 import type * as menu from "../menu.js";
+import type * as migrations from "../migrations.js";
 import type * as offers from "../offers.js";
 import type * as orders from "../orders.js";
 import type * as users from "../users.js";
@@ -33,6 +34,7 @@ declare const fullApi: ApiFromModules<{
   favourites: typeof favourites;
   init: typeof init;
   menu: typeof menu;
+  migrations: typeof migrations;
   offers: typeof offers;
   orders: typeof orders;
   users: typeof users;
