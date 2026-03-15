@@ -6,10 +6,21 @@
 
 @theme {
   --color-foodmohalla: #FFEC01;
-  --color-primary: var(--color-foodmohalla);
-  --color-primary-content: #181411;
-  --color-primary-light: #fff480;
-  --color-primary-dark: #ccbe01;
+  --color-foodmohalla-50: #fffde6;
+  --color-foodmohalla-100: #fffacc;
+  --color-foodmohalla-200: #fff599;
+  --color-foodmohalla-300: #ffef66;
+  --color-foodmohalla-400: #ffea33;
+  --color-foodmohalla-500: #FFEC01;
+  --color-foodmohalla-600: #ccbd01;
+  --color-foodmohalla-700: #998e01;
+  --color-foodmohalla-800: #665e00;
+  --color-foodmohalla-900: #332f00;
+  --color-foodmohalla-950: #1a1800;
+  --color-primary: #ec7f13;
+  --color-primary-content: #ffffff;
+  --color-primary-light: #fbd8b5;
+  --color-primary-dark: #b05e0e;
   --color-background-light: #f8f7f6;
   --color-background-dark: #221910;
   --color-surface-light: #ffffff;
@@ -114,9 +125,8 @@ body {
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --foodmohalla: #FFEC01;
-  --primary: var(--foodmohalla);
-  --primary-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.646 0.222 41.116);
+  --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
@@ -149,7 +159,7 @@ body {
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: var(--foodmohalla);
+  --primary: oklch(0.646 0.222 41.116);
   --primary-foreground: oklch(0.145 0 0);
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);

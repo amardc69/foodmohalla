@@ -56,7 +56,7 @@ function ProfileContent() {
           
           {/* Avatar Area */}
           <div className="shrink-0 flex flex-col items-center">
-             <div className="size-32 rounded-full bg-gradient-to-br from-primary/20 to-orange-100 flex items-center justify-center border-4 border-white shadow-lg overflow-hidden relative group">
+             <div className="size-32 rounded-full bg-gradient-to-br from-primary/20 to-foodmohalla-100 flex items-center justify-center border-4 border-white shadow-lg overflow-hidden relative group">
                 {userToDisplay?.image ? (
                    // eslint-disable-next-line @next/next/no-img-element
                    <img src={userToDisplay.image} alt={userToDisplay.name || "User"} className="w-full h-full object-cover" />
@@ -140,7 +140,7 @@ function ProfileContent() {
                 </div>
                 <h3 className="text-xl font-bold text-slate-800 mb-2">No favorites yet</h3>
                 <p className="text-slate-500 max-w-sm mb-6">You haven&apos;t added any items to your favorites. Explore our menu and save your top picks!</p>
-                <Link href="/menu" className="bg-primary text-white font-bold py-3 px-6 rounded-xl hover:bg-orange-600 transition-colors shadow-sm">
+                <Link href="/menu" className="bg-primary text-white font-bold py-3 px-6 rounded-xl hover:bg-foodmohalla-600 transition-colors shadow-sm">
                   Explore Menu
                 </Link>
               </div>

@@ -306,7 +306,7 @@ export default function ProductPage() {
                       ? "bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200"
                       : isAdding
                       ? "bg-green-500 text-white shadow-green-500/30"
-                      : "bg-primary hover:bg-orange-600 text-white shadow-orange-500/30"
+                      : "bg-primary hover:bg-foodmohalla-600 text-white shadow-foodmohalla-500/30"
                   }`}
                 >
                   <span>{item.isOutOfStock ? "Out of Stock" : isAdding ? "Added!" : "Add to Cart"}</span>

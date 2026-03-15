@@ -214,7 +214,7 @@ function TrackingContent() {
               {displayOrder.items.map((item: any, i: number) => (
                 <div key={i} className="py-4 flex justify-between items-center group hover:bg-slate-50 transition-colors -mx-4 px-4 rounded-xl">
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center text-primary shadow-sm group-hover:scale-105 transition-transform">
+                    <div className="w-12 h-12 rounded-xl bg-foodmohalla-50 flex items-center justify-center text-primary shadow-sm group-hover:scale-105 transition-transform">
                       <span className="material-symbols-outlined text-xl">restaurant</span>
                     </div>
                     <div>
@@ -288,7 +288,7 @@ function TrackingContent() {
                <span className="w-8 h-px bg-slate-200"></span> Restaurant
             </h3>
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center text-primary shrink-0 shadow-sm">
+              <div className="w-12 h-12 rounded-xl bg-foodmohalla-50 flex items-center justify-center text-primary shrink-0 shadow-sm">
                 <span className="material-symbols-outlined text-xl">storefront</span>
               </div>
               <div>

@@ -74,7 +74,7 @@ export default function CustomerHeader() {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className="flex items-center gap-2 p-1.5 pr-3 rounded-full hover:bg-slate-100 transition-colors border border-transparent hover:border-slate-200 focus:outline-none">
-                    <div className="size-8 rounded-full bg-gradient-to-br from-primary/20 to-orange-100 flex items-center justify-center border border-primary/20 overflow-hidden">
+                    <div className="size-8 rounded-full bg-gradient-to-br from-primary/20 to-foodmohalla-100 flex items-center justify-center border border-primary/20 overflow-hidden">
                       {session.user?.image ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={session.user.image} alt="User" className="w-full h-full object-cover" />

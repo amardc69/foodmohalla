@@ -208,7 +208,7 @@ function MenuContent() {
         </div>
         {/* Promo Card */}
         {freeDeliveryEnabled && (
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary to-orange-600 p-5 text-white shadow-lg">
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary to-foodmohalla-600 p-5 text-white shadow-lg">
             <div className="absolute top-0 right-0 -mt-2 -mr-2 h-16 w-16 rounded-full bg-white/20 blur-xl"></div>
             <h3 className="relative text-lg font-bold mb-1">Free Delivery</h3>
             <p className="relative text-xs opacity-90 mb-3">
@@ -300,7 +300,7 @@ function MenuContent() {
                       
                       <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10">
                         {item.isBestSeller && <span className="px-2 py-0.5 bg-yellow-400 text-yellow-900 text-[10px] w-fit font-bold rounded shadow-sm">BEST SELLER</span>}
-                        {item.isFeatured && <span className="px-2 py-0.5 bg-orange-500 text-white text-[10px] w-fit font-bold rounded shadow-sm">FEATURED</span>}
+                        {item.isFeatured && <span className="px-2 py-0.5 bg-foodmohalla-500 text-white text-[10px] w-fit font-bold rounded shadow-sm">FEATURED</span>}
                         {item.badge && (
                           <div
                             className={`text-white text-[10px] w-fit font-bold px-2 py-0.5 rounded shadow-sm ${
@@ -394,7 +394,7 @@ function MenuContent() {
                                   ? "bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200"
                                   : addingToCart === item.id
                                   ? "bg-green-500 text-white"
-                                  : "bg-primary hover:bg-orange-600 text-white shadow-sm shadow-orange-200"
+                                  : "bg-primary hover:bg-foodmohalla-600 text-white shadow-sm shadow-foodmohalla-200"
                               }`}
                             >
                               {item.isOutOfStock ? "Out of Stock" : addingToCart === item.id ? "Added!" : "Add"}
@@ -710,7 +710,7 @@ function MenuContent() {
                             className={`w-full mt-6 font-bold text-base py-3.5 rounded-xl shadow-lg flex items-center justify-center gap-2 transition-transform active:scale-[0.98] ${
                               addingToCart === selectedItemForSheet.id
                                 ? "bg-green-500 text-white shadow-green-500/30"
-                                : "bg-primary hover:bg-orange-600 text-white shadow-orange-500/30"
+                                : "bg-primary hover:bg-foodmohalla-600 text-white shadow-foodmohalla-500/30"
                             }`}
                           >
                             <span className="material-symbols-outlined text-[20px]">

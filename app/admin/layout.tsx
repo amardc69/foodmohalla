@@ -54,7 +54,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className="flex flex-col gap-3">
             <Link 
               href="/"
-              className="w-full py-2.5 px-4 bg-primary text-white font-bold rounded-xl hover:bg-orange-600 transition-colors"
+              className="w-full py-2.5 px-4 bg-primary text-white font-bold rounded-xl hover:bg-foodmohalla-600 transition-colors"
             >
               Return Home
             </Link>

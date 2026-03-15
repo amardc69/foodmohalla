@@ -196,7 +196,7 @@ export default function OffersPage() {
             </button>
             <button
               type="submit"
-              className="px-6 py-2 bg-primary text-white rounded-lg text-sm font-bold hover:bg-orange-600 transition-colors"
+              className="px-6 py-2 bg-primary text-white rounded-lg text-sm font-bold hover:bg-foodmohalla-600 transition-colors"
             >
               Save Offer
             </button>
@@ -274,7 +274,7 @@ export default function OffersPage() {
         </div>
         <button
           onClick={handleAddNew}
-          className="px-4 py-2 bg-primary text-white text-sm font-bold rounded-lg hover:bg-orange-600 transition-colors shadow-sm focus:ring-2 focus:ring-primary focus:ring-offset-2"
+          className="px-4 py-2 bg-primary text-white text-sm font-bold rounded-lg hover:bg-foodmohalla-600 transition-colors shadow-sm focus:ring-2 focus:ring-primary focus:ring-offset-2"
         >
           + Create Offer
         </button>

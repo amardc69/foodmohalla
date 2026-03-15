@@ -398,7 +398,7 @@ export default function CustomizeMenuPage() {
         </div>
         <button
           onClick={handleAddNew}
-          className="px-4 py-2 bg-primary text-white text-sm font-bold rounded-lg hover:bg-orange-600 transition-colors shadow-sm cursor-pointer"
+          className="px-4 py-2 bg-primary text-white text-sm font-bold rounded-lg hover:bg-foodmohalla-600 transition-colors shadow-sm cursor-pointer"
         >
           + Add New Item
         </button>
@@ -522,7 +522,7 @@ export default function CustomizeMenuPage() {
                         ))}
                       </div>
                     </div>
-                    <button type="submit" disabled={categoryUploading} className="w-full bg-primary text-white rounded-xl py-3.5 font-bold hover:bg-orange-600 shadow-md shadow-primary/20 transition-all text-base flex justify-center items-center gap-2 disabled:opacity-60">
+                    <button type="submit" disabled={categoryUploading} className="w-full bg-primary text-white rounded-xl py-3.5 font-bold hover:bg-foodmohalla-600 shadow-md shadow-primary/20 transition-all text-base flex justify-center items-center gap-2 disabled:opacity-60">
                       {categoryUploading ? (
                          <span className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></span>
                       ) : (
@@ -588,7 +588,7 @@ export default function CustomizeMenuPage() {
               )}
               <div className="absolute top-2 left-2 flex flex-col gap-1 z-10">
                  {item.isBestSeller && <span className="px-2 py-0.5 bg-yellow-400 text-yellow-900 text-[10px] font-bold rounded shadow-sm">BEST SELLER</span>}
-                 {item.isFeatured && <span className="px-2 py-0.5 bg-orange-500 text-white text-[10px] font-bold rounded shadow-sm">FEATURED</span>}
+                 {item.isFeatured && <span className="px-2 py-0.5 bg-foodmohalla-500 text-white text-[10px] font-bold rounded shadow-sm">FEATURED</span>}
               </div>
               
               <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm p-1 rounded cursor-default shadow-sm border border-gray-100">
@@ -637,8 +637,8 @@ export default function CustomizeMenuPage() {
                   onClick={(e) => { e.stopPropagation(); updateMenuItem({ _id: item._id, isFeatured: !item.isFeatured }); }}
                   className={`px-2 py-1 rounded-md text-[10px] font-bold transition-colors cursor-pointer border ${
                     item.isFeatured
-                      ? "bg-orange-50 text-orange-600 border-orange-200"
-                      : "bg-gray-50 text-gray-400 border-gray-200 hover:border-orange-200 hover:text-orange-500"
+                      ? "bg-foodmohalla-50 text-foodmohalla-600 border-foodmohalla-200"
+                      : "bg-gray-50 text-gray-400 border-gray-200 hover:border-foodmohalla-200 hover:text-foodmohalla-500"
                   }`}
                 >
                   ◆ Featured
@@ -876,7 +876,7 @@ export default function CustomizeMenuPage() {
                   <button
                     type="button"
                     onClick={addSize}
-                    className="text-xs font-bold text-primary hover:text-orange-600 transition-colors bg-primary/10 px-3 py-1.5 rounded-full flex items-center gap-1"
+                    className="text-xs font-bold text-primary hover:text-foodmohalla-600 transition-colors bg-primary/10 px-3 py-1.5 rounded-full flex items-center gap-1"
                   >
                     <span className="material-symbols-outlined text-[16px]">add</span> Size
                   </button>
@@ -927,7 +927,7 @@ export default function CustomizeMenuPage() {
                   <button
                     type="button"
                     onClick={addAddon}
-                    className="text-xs font-bold text-primary hover:text-orange-600 transition-colors bg-primary/10 px-3 py-1.5 rounded-full flex items-center gap-1"
+                    className="text-xs font-bold text-primary hover:text-foodmohalla-600 transition-colors bg-primary/10 px-3 py-1.5 rounded-full flex items-center gap-1"
                   >
                     <span className="material-symbols-outlined text-[16px]">add</span> Addon
                   </button>
@@ -1003,7 +1003,7 @@ export default function CustomizeMenuPage() {
                   <button
                     type="button"
                     onClick={addInstruction}
-                    className="text-xs font-bold text-primary hover:text-orange-600 transition-colors bg-primary/10 px-3 py-1.5 rounded-full flex items-center gap-1"
+                    className="text-xs font-bold text-primary hover:text-foodmohalla-600 transition-colors bg-primary/10 px-3 py-1.5 rounded-full flex items-center gap-1"
                   >
                     <span className="material-symbols-outlined text-[16px]">add</span> Instruction
                   </button>
@@ -1050,7 +1050,7 @@ export default function CustomizeMenuPage() {
                 </button>
                 <button
                   type="submit"
-                  className="px-8 py-2.5 bg-primary text-white rounded-lg text-sm font-bold hover:bg-orange-600 shadow-md shadow-primary/20 transition-all disabled:opacity-50"
+                  className="px-8 py-2.5 bg-primary text-white rounded-lg text-sm font-bold hover:bg-foodmohalla-600 shadow-md shadow-primary/20 transition-all disabled:opacity-50"
                   disabled={uploading}
                 >
                   Save Item

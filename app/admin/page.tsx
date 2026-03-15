@@ -32,9 +32,9 @@ const statusColors: Record<string, { bg: string; text: string; ring: string }> =
       ring: "ring-blue-200",
     },
     "Out for Delivery": {
-      bg: "bg-orange-50",
-      text: "text-orange-600",
-      ring: "ring-orange-200",
+      bg: "bg-foodmohalla-50",
+      text: "text-foodmohalla-600",
+      ring: "ring-foodmohalla-200",
     },
     Delivered: {
       bg: "bg-green-50",
@@ -494,7 +494,7 @@ export default function AdminDashboard() {
               icon: "pending_actions",
               label: `Pending Orders`,
               value: String(stats.pendingOrders),
-              gradient: "from-amber-500 to-orange-600",
+              gradient: "from-amber-500 to-foodmohalla-600",
             },
             {
               icon: "check_circle",
@@ -850,10 +850,10 @@ export default function AdminDashboard() {
                   Order Type
                 </h4>
                 <div
-                  className={`border rounded-lg p-3 mb-4 ${selectedOrder.orderType === "Takeaway" ? "bg-purple-50 border-purple-100 dark:bg-purple-950/20 dark:border-purple-900" : "bg-orange-50 border-orange-100 dark:bg-orange-950/20 dark:border-orange-900"}`}
+                  className={`border rounded-lg p-3 mb-4 ${selectedOrder.orderType === "Takeaway" ? "bg-purple-50 border-purple-100 dark:bg-purple-950/20 dark:border-purple-900" : "bg-foodmohalla-50 border-foodmohalla-100 dark:bg-foodmohalla-950/20 dark:border-foodmohalla-900"}`}
                 >
                   <p
-                    className={`text-sm font-bold ${selectedOrder.orderType === "Takeaway" ? "text-purple-900 dark:text-purple-100" : "text-orange-900 dark:text-orange-100"}`}
+                    className={`text-sm font-bold ${selectedOrder.orderType === "Takeaway" ? "text-purple-900 dark:text-purple-100" : "text-foodmohalla-900 dark:text-foodmohalla-100"}`}
                   >
                     {selectedOrder.orderType || "Delivery"}
                   </p>
@@ -963,7 +963,7 @@ export default function AdminDashboard() {
           showCloseButton={false}
         >
           {/* Custom gradient header */}
-          <div className="bg-gradient-to-r from-amber-500 to-orange-500 px-6 py-4 rounded-t-lg flex items-center justify-between">
+          <div className="bg-gradient-to-r from-amber-500 to-foodmohalla-500 px-6 py-4 rounded-t-lg flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="relative">
                 <span className="material-symbols-outlined text-white text-2xl">
@@ -1036,7 +1036,7 @@ export default function AdminDashboard() {
               {/* Type and Address */}
               <div>
                 <div
-                  className={`border rounded-lg p-3 mb-4 ${currentNewOrder.orderType === "Takeaway" ? "bg-purple-50 border-purple-100 text-purple-900" : "bg-orange-50 border-orange-100 text-orange-900"}`}
+                  className={`border rounded-lg p-3 mb-4 ${currentNewOrder.orderType === "Takeaway" ? "bg-purple-50 border-purple-100 text-purple-900" : "bg-foodmohalla-50 border-foodmohalla-100 text-foodmohalla-900"}`}
                 >
                   <p className="text-sm font-bold">
                     Order Type: {currentNewOrder.orderType || "Delivery"}
