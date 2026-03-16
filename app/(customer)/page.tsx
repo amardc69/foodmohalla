@@ -25,7 +25,7 @@ export default function HomePage() {
                 India's most cheesy <br /> Pizza-Burger brand!!
               </h1>
 
-              <p className="text-white/90 text-lg md:text-xl font-semibold mt-2 drop-shadow-sm">
+              <p className="text-white/90 text-xl md:text-3xl font-semibold mt-2 drop-shadow-sm">
                 Food Mohalla Baramati
               </p>
             </div>
