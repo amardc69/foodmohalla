@@ -42,7 +42,7 @@ export default function CustomerHeader() {
             <img src="/foodmohalla.png" alt="Food Mohalla" className="h-full w-auto object-contain" />
           </div>
           <h2 className="text-slate-900 text-xl font-extrabold tracking-tight hidden sm:block">
-            Food Mohalla
+            Food Mohalla Baramati
           </h2>
         </Link>
         <div className="flex flex-1 justify-end gap-6 sm:gap-8">
