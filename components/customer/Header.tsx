@@ -41,15 +41,9 @@ export default function CustomerHeader() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/foodmohalla.png" alt="Food Mohalla" className="h-full w-auto object-contain" />
           </div>
-          <div className="text-center">
-            <h1 className="text-slate-900 text-4xl sm:text-5xl font-extrabold tracking-tight">
-              Best Burger Pizza
-            </h1>
-
-            <h2 className="text-slate-700 text-lg sm:text-xl font-semibold tracking-tight mt-2 hidden sm:block">
-              Food Mohalla Baramati
-            </h2>
-          </div>
+          <h2 className="text-slate-900 text-xl font-extrabold tracking-tight hidden sm:block">
+            Food Mohalla Baramati
+          </h2>
         </Link>
         <div className="flex flex-1 justify-end gap-6 sm:gap-8">
           {/* Desktop nav */}
