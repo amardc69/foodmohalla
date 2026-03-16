@@ -34,27 +34,16 @@ export default function CustomerFooter() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-16">
-          <div className="flex flex-col gap-4">
-            <h3 className="text-slate-900 font-bold">Company</h3>
-            <div className="flex flex-col gap-2">
-              <Link className="text-slate-500 hover:text-primary text-sm" href="#">
-                About Us
-              </Link>
-              <Link className="text-slate-500 hover:text-primary text-sm" href="#">
-                Privacy Policy
-              </Link>
-              <Link className="text-slate-500 hover:text-primary text-sm" href="#">
-                Terms of Service
-              </Link>
+        <div className="flex flex-col gap-4 max-w-md">
+          <h3 className="text-slate-900 font-bold">Contact Us</h3>
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-2">
+               <span className="material-symbols-outlined text-slate-400 text-lg">call</span>
+               <p className="text-slate-500 text-sm font-medium">+91 80804 17538</p>
             </div>
-          </div>
-
-          <div className="flex flex-col gap-4 md:col-span-2">
-            <h3 className="text-slate-900 font-bold">Contact Us</h3>
-            <div className="flex flex-col gap-2">
-              <p className="text-slate-500 text-sm font-medium">+91 80804 17538</p>
-              <p className="text-slate-500 text-sm leading-relaxed">
+            <div className="flex gap-2">
+               <span className="material-symbols-outlined text-slate-400 text-lg">location_on</span>
+               <p className="text-slate-500 text-sm leading-relaxed">
                 Shop No 30, Ground Floor, Subadhra Mall,<br />
                 Behind 7th Heaven, Baramati MIDC,<br />
                 Maharashtra 413133
