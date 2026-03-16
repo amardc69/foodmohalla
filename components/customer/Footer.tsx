@@ -33,7 +33,8 @@ export default function CustomerFooter() {
             </a>
           </div>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-8 md:gap-16">
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-16">
           <div className="flex flex-col gap-4">
             <h3 className="text-slate-900 font-bold">Company</h3>
             <div className="flex flex-col gap-2">
@@ -41,35 +42,28 @@ export default function CustomerFooter() {
                 About Us
               </Link>
               <Link className="text-slate-500 hover:text-primary text-sm" href="#">
-                Careers
-              </Link>
-              <Link className="text-slate-500 hover:text-primary text-sm" href="#">
-                Team
-              </Link>
-            </div>
-          </div>
-          <div className="flex flex-col gap-4">
-            <h3 className="text-slate-900 font-bold">Support</h3>
-            <div className="flex flex-col gap-2">
-              <Link className="text-slate-500 hover:text-primary text-sm" href="#">
-                Help Center
+                Privacy Policy
               </Link>
               <Link className="text-slate-500 hover:text-primary text-sm" href="#">
                 Terms of Service
               </Link>
-              <Link className="text-slate-500 hover:text-primary text-sm" href="#">
-                Privacy Policy
-              </Link>
             </div>
           </div>
-          <div className="flex flex-col gap-4 col-span-2 md:col-span-1">
-            <h3 className="text-slate-900 font-bold">Contact</h3>
+
+          <div className="flex flex-col gap-4 md:col-span-2">
+            <h3 className="text-slate-900 font-bold">Contact Us</h3>
             <div className="flex flex-col gap-2">
-              <p className="text-slate-500 text-sm">+91 80804 17538</p>
+              <p className="text-slate-500 text-sm font-medium">+91 80804 17538</p>
+              <p className="text-slate-500 text-sm leading-relaxed">
+                Shop No 30, Ground Floor, Subadhra Mall,<br />
+                Behind 7th Heaven, Baramati MIDC,<br />
+                Maharashtra 413133
+              </p>
             </div>
           </div>
         </div>
       </div>
+
       <div className="border-t border-slate-100 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
         <p className="text-slate-400 text-sm">
           © 2025 Food Mohalla. All rights reserved.
