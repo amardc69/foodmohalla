@@ -20,10 +20,14 @@ export default function HomePage() {
               }}
             ></div>
             <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/80 via-black/40 to-black/30"></div>
-            <div className="relative z-20 flex flex-col gap-4 max-w-3xl items-center">
+            <div className="relative z-20 flex flex-col gap-4 max-w-3xl items-center text-center">
               <h1 className="text-white text-4xl font-black leading-tight tracking-[-0.033em] md:text-6xl drop-shadow-sm">
                 India's most cheesy <br /> Pizza-Burger brand!!
               </h1>
+
+              <p className="text-white/90 text-lg md:text-xl font-semibold mt-2 drop-shadow-sm">
+                Food Mohalla Baramati
+              </p>
             </div>
           </div>
         </div>
