@@ -22,7 +22,7 @@ export default function HomePage() {
             <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/80 via-black/40 to-black/30"></div>
             <div className="relative z-20 flex flex-col gap-4 max-w-3xl items-center">
               <h1 className="text-white text-4xl font-black leading-tight tracking-[-0.033em] md:text-6xl drop-shadow-sm">
-                Delicious food delivered to your doorstep
+                India's most cheesy Pizza-Burger brand!!
               </h1>
               <h2 className="text-slate-200 text-lg font-medium leading-relaxed max-w-xl drop-shadow-sm">
                 Order from the best restaurant in your neighborhood and satisfy
