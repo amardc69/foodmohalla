@@ -11,7 +11,7 @@ export default function CustomerFooter() {
               <img src="/foodmohalla.png" alt="Food Mohalla" className="h-full w-auto object-contain" />
             </div>
             <span className="text-slate-900 text-xl font-extrabold">
-              Food Mohalla
+              Food Mohalla Baramati
             </span>
           </div>
           <p className="text-slate-500 text-sm leading-relaxed">
