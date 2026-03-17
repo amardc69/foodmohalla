@@ -9,10 +9,6 @@ import type { MenuItem } from "@/lib/types";
 import { useSession } from "next-auth/react";
 import { useCartUserId } from "@/lib/useGuestId";
 
-// Removed hardcoded addons
-
-const instructions = ["No Onions", "No Mayo", "Less Spicy"];
-
 export default function ProductPage() {
   const params = useParams();
   const router = useRouter();
@@ -60,14 +56,6 @@ export default function ProductPage() {
       prev.includes(addon)
         ? prev.filter((a) => a !== addon)
         : [...prev, addon]
-    );
-  }
-
-  function toggleInstruction(inst: string) {
-    setSelectedInstructions((prev) =>
-      prev.includes(inst)
-        ? prev.filter((i) => i !== inst)
-        : [...prev, inst]
     );
   }
 
@@ -157,8 +145,10 @@ export default function ProductPage() {
         <span className="font-semibold text-text-main">{item.name}</span>
       </nav>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-        {/* Left: Images */}
+      {/* Grid Layout: Image (Col 1), Info (Col 2), FBT (Col 1 Row 2) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-y-10 lg:gap-10">
+        
+        {/* 1. Left: Image */}
         <div className="lg:col-span-7 flex flex-col gap-4">
           <div className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden shadow-sm group">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -183,48 +173,10 @@ export default function ProductPage() {
               </span>
             </button>
           </div>
-
-          {/* Frequently Bought Together */}
-          <div className="mt-8">
-            <h3 className="text-xl font-bold mb-4">
-              Frequently Bought Together
-            </h3>
-            <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar snap-x">
-              {relatedItems.map((related: any) => (
-                <Link
-                  key={related.id}
-                  href={`/menu/${related.id}`}
-                  className="snap-start shrink-0 w-48 bg-white rounded-xl border border-slate-200 p-3 flex flex-col hover:shadow-md transition-shadow"
-                >
-                  <div className="w-full h-32 rounded-lg overflow-hidden mb-3 bg-slate-100">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      className="w-full h-full object-cover"
-                      alt={related.name}
-                      src={related.image}
-                    />
-                  </div>
-                  <h4 className="font-bold text-sm mb-1 truncate">
-                    {related.name}
-                  </h4>
-                  <div className="flex items-center justify-between mt-auto">
-                    <span className="text-sm font-semibold text-text-muted">
-                      ₹{related.price.toFixed(2)}
-                    </span>
-                    <span className="size-8 flex items-center justify-center bg-slate-100 rounded-lg hover:bg-primary hover:text-white transition-colors">
-                      <span className="material-symbols-outlined text-sm">
-                        add
-                      </span>
-                    </span>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
         </div>
 
-        {/* Right: Product Details */}
-        <div className="lg:col-span-5 relative">
+        {/* 2. Right: Product Details */}
+        <div className="lg:col-span-5 lg:row-span-2 relative">
           <div className="sticky top-24 space-y-8">
             {/* Header Info */}
             <div>
@@ -232,7 +184,7 @@ export default function ProductPage() {
                 <h1 className="text-3xl font-extrabold text-text-main leading-tight">
                   {item.name}
                 </h1>
-                <div className="flex flex-col items-end">
+                <div className="flex flex-col items-end shrink-0 ml-4">
                   {item.isSizeBased && item.sizes?.length > 0 ? (
                     <span className="text-2xl font-bold text-primary flex items-center gap-1">
                       <span className="text-sm text-slate-500 font-medium">From</span>
@@ -323,7 +275,7 @@ export default function ProductPage() {
                         />
                         <span className="text-sm font-medium">{addon.name}</span>
                       </div>
-                      <span className="text-sm text-text-muted">
+                      <span className="text-sm text-text-muted whitespace-nowrap">
                         +₹{(hasSizes && selectedSize && addon?.sizePrices?.[selectedSize] !== undefined)
                           ? addon.sizePrices[selectedSize].toFixed(2)
                           : addon.price.toFixed(2)}
@@ -334,51 +286,59 @@ export default function ProductPage() {
               </div>
               )}
 
-              {/* Instructions */}
+              {/* Special Instructions */}
               <div>
                 <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
                   Special Instructions
                 </h3>
-                <div className="flex flex-wrap gap-2">
-                  {[...instructions, ...(item.instructions || [])].map((inst) => (
-                    <label key={inst} className="cursor-pointer">
-                      <input
-                        className="peer sr-only"
-                        type="checkbox"
-                        checked={selectedInstructions.includes(inst)}
-                        onChange={() => toggleInstruction(inst)}
-                      />
-                      <span className="px-4 py-2 rounded-full border border-neutral-light bg-white text-sm text-text-muted peer-checked:bg-primary peer-checked:text-white peer-checked:border-primary transition-all select-none">
-                        {inst}
-                      </span>
-                    </label>
-                  ))}
-                </div>
+                <textarea
+                  placeholder="E.g. Make it extra crispy, allergy to peanuts..."
+                  className="w-full text-sm p-3 border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all resize-none h-20 shadow-sm"
+                  value={
+                    selectedInstructions
+                      .find((i) => i.startsWith("Custom: "))
+                      ?.replace("Custom: ", "") || ""
+                  }
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setSelectedInstructions((prev) => {
+                      const filtered = prev.filter(
+                        (i) => !i.startsWith("Custom: "),
+                      );
+                      return val.trim()
+                        ? [...filtered, `Custom: ${val}`]
+                        : filtered;
+                    });
+                  }}
+                ></textarea>
               </div>
             </div>
 
             {/* Cart Action */}
-            <div className="pt-4 pb-8 sm:pb-0">
-              <div className="flex flex-col sm:flex-row gap-4">
-                <div className="flex items-center justify-between sm:justify-center bg-white border border-neutral-light rounded-xl px-4 py-3 sm:w-1/3">
+            <div className="pt-4 pb-8 sm:pb-0 border-t border-slate-100">
+              <div className="flex flex-row items-center gap-3 w-full">
+                {/* Quantity Control */}
+                <div className="flex items-center justify-between bg-white border border-slate-200 rounded-xl px-2 py-2 w-[40%] sm:w-[140px] shadow-sm">
                   <button
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="size-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-text-main transition-colors"
+                    className="size-10 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-600 transition-colors"
                   >
-                    <span className="material-symbols-outlined">remove</span>
+                    <span className="material-symbols-outlined text-[20px]">remove</span>
                   </button>
-                  <span className="font-bold text-lg">{quantity}</span>
+                  <span className="font-bold text-lg w-8 text-center text-slate-800">{quantity}</span>
                   <button
                     onClick={() => setQuantity(quantity + 1)}
-                    className="size-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-text-main transition-colors"
+                    className="size-10 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-600 transition-colors"
                   >
-                    <span className="material-symbols-outlined">add</span>
+                    <span className="material-symbols-outlined text-[20px]">add</span>
                   </button>
                 </div>
+
+                {/* Add to Cart Button */}
                 <button
                   onClick={handleAddToCart}
                   disabled={isAdding || item.isOutOfStock}
-                  className={`flex-1 font-bold text-lg py-3 px-6 rounded-xl shadow-lg flex items-center justify-center gap-3 transition-transform active:scale-[0.98] ${
+                  className={`flex-1 font-bold text-sm sm:text-lg py-3.5 px-3 sm:px-6 rounded-xl shadow-lg flex items-center justify-center gap-2 transition-transform active:scale-[0.98] ${
                     item.isOutOfStock
                       ? "bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200"
                       : isAdding
@@ -386,9 +346,14 @@ export default function ProductPage() {
                       : "bg-primary hover:bg-foodmohalla-600 text-white shadow-foodmohalla-500/30"
                   }`}
                 >
-                  <span>{item.isOutOfStock ? "Out of Stock" : isAdding ? "Added!" : "Add to Cart"}</span>
+                  <span className="hidden sm:inline">
+                    {item.isOutOfStock ? "Out of Stock" : isAdding ? "Added!" : "Add to Cart"}
+                  </span>
+                  <span className="sm:hidden">
+                    {item.isOutOfStock ? "Out of Stock" : isAdding ? "Added!" : "Add"}
+                  </span>
                   {!item.isOutOfStock && (
-                    <span className="bg-white/20 px-2 py-0.5 rounded text-sm font-semibold">
+                    <span className="bg-white/20 px-2 py-0.5 rounded text-xs sm:text-sm font-semibold">
                       ₹{totalPrice.toFixed(2)}
                     </span>
                   )}
@@ -397,6 +362,45 @@ export default function ProductPage() {
             </div>
           </div>
         </div>
+
+        {/* 3. Left Bottom: Frequently Bought Together (Sits under image on LG, bottom of page on Mobile) */}
+        <div className="lg:col-span-7 mt-6 lg:mt-0">
+          <h3 className="text-xl font-bold mb-4">
+            Frequently Bought Together
+          </h3>
+          <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar snap-x">
+            {relatedItems.map((related: any) => (
+              <Link
+                key={related.id}
+                href={`/menu/${related.id}`}
+                className="snap-start shrink-0 w-48 bg-white rounded-xl border border-slate-200 p-3 flex flex-col hover:shadow-md transition-shadow"
+              >
+                <div className="w-full h-32 rounded-lg overflow-hidden mb-3 bg-slate-100">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    className="w-full h-full object-cover"
+                    alt={related.name}
+                    src={related.image}
+                  />
+                </div>
+                <h4 className="font-bold text-sm mb-1 truncate">
+                  {related.name}
+                </h4>
+                <div className="flex items-center justify-between mt-auto">
+                  <span className="text-sm font-semibold text-text-muted">
+                    ₹{related.price.toFixed(2)}
+                  </span>
+                  <span className="size-8 flex items-center justify-center bg-slate-100 rounded-lg hover:bg-primary hover:text-white transition-colors">
+                    <span className="material-symbols-outlined text-sm">
+                      add
+                    </span>
+                  </span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+
       </div>
     </div>
   );

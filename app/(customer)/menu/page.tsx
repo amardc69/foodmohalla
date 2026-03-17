@@ -441,7 +441,7 @@ function MenuContent() {
         open={!!selectedItemForSheet}
         onOpenChange={(open) => !open && setSelectedItemForSheet(null)}
       >
-        <DrawerContent className="max-h-[92vh] flex flex-col lg:w-[50vw] lg:mx-auto">
+        <DrawerContent className="max-h-[92vh] flex flex-col lg:w-[66vw] lg:mx-auto">
           {selectedItemForSheet &&
             (() => {
               const itemSizes = selectedItemForSheet.sizes || [];
@@ -580,7 +580,7 @@ function MenuContent() {
                                       {addon.name}
                                     </span>
                                   </div>
-                                  <span className="text-xs lg:text-sm font-semibold text-slate-500">
+                                  <span className="text-xs lg:text-sm font-semibold text-slate-500 whitespace-nowrap">
                                     +₹{
                                       (hasSizes && selectedSize && addon?.sizePrices?.[selectedSize] !== undefined)
                                         ? addon.sizePrices[selectedSize].toFixed(2)
@@ -651,10 +651,10 @@ function MenuContent() {
                           <div className="space-y-4">
                             <div className="flex justify-between text-sm">
                               <span className="text-slate-600 font-medium">
-                                {selectedItemForSheet.name}
+                                {selectedItemForSheet.name} {hasSizes && selectedSize ? `(${selectedSize})` : ""}
                               </span>
                               <span className="font-bold text-slate-800">
-                                ₹{selectedItemForSheet.price.toFixed(2)}
+                                ₹{baseItemPrice.toFixed(2)}
                               </span>
                             </div>
                             {selectedAddons.length > 0 && (
