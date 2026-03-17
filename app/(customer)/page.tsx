@@ -120,12 +120,6 @@ export default function HomePage() {
                   unmatched speed and quality service. Experience food delivery
                   like never before.
                 </p>
-                <button className="w-fit mt-2 text-primary font-bold hover:underline flex items-center gap-1">
-                  Learn more{" "}
-                  <span className="material-symbols-outlined !text-sm">
-                    arrow_forward
-                  </span>
-                </button>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 md:w-2/3 w-full">
                 {[

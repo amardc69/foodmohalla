@@ -18,19 +18,6 @@ import {
 import { useSession } from "next-auth/react";
 import { useCartUserId } from "@/lib/useGuestId";
 
-const defaultInstructions = [
-  "No Onions",
-  "No Mayo",
-  "Less Spicy",
-  "Extra Spicy",
-  "No Garlic",
-];
-const defaultAddonsFallback = [
-  { name: "Extra Cheese Slice", price: 1.5 },
-  { name: "Extra Paneer Patty", price: 3.0 },
-  { name: "Peri Peri Sprinkles", price: 0.5 },
-];
-
 function MenuContent() {
   const searchParams = useSearchParams();
   const initialCategory = searchParams.get("category") || "";
@@ -274,24 +261,6 @@ function MenuContent() {
               ))}
             </div>
           </div>
-          {/* Veg Only Switch - commented out
-          <div className="flex items-center gap-4">
-            <label className="flex items-center cursor-pointer gap-2 select-none group">
-              <div className="relative">
-                <input
-                  className="sr-only peer"
-                  type="checkbox"
-                  checked={vegOnly}
-                  onChange={(e) => setVegOnly(e.target.checked)}
-                />
-                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
-              </div>
-              <span className="text-sm font-medium text-slate-700 group-hover:text-green-600 transition-colors">
-                Veg Only
-              </span>
-            </label>
-          </div>
-          */}
         </div>
 
         {/* Menu Sections */}
@@ -472,7 +441,7 @@ function MenuContent() {
         open={!!selectedItemForSheet}
         onOpenChange={(open) => !open && setSelectedItemForSheet(null)}
       >
-        <DrawerContent className="max-h-[92vh] flex flex-col">
+        <DrawerContent className="max-h-[92vh] flex flex-col lg:w-[50vw] lg:mx-auto">
           {selectedItemForSheet &&
             (() => {
               const itemSizes = selectedItemForSheet.sizes || [];
@@ -485,9 +454,7 @@ function MenuContent() {
                 if (sizeObj) baseItemPrice = sizeObj.price;
               }
 
-              const itemAddons = selectedItemForSheet.addons?.length
-                ? selectedItemForSheet.addons
-                : defaultAddonsFallback;
+              const itemAddons = selectedItemForSheet.addons || [];
                 
               const addonTotal = selectedAddons.reduce(
                 (sum: number, name: string) => {
@@ -632,10 +599,7 @@ function MenuContent() {
                             Special Instructions
                           </h3>
                           <div className="flex flex-wrap gap-2 mb-3">
-                            {[
-                              ...defaultInstructions,
-                              ...(selectedItemForSheet?.instructions || []),
-                            ].map((inst) => (
+                            {(selectedItemForSheet?.instructions || []).map((inst: any) => (
                               <label key={inst} className="cursor-pointer">
                                 <input
                                   className="peer sr-only"
