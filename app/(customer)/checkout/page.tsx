@@ -44,6 +44,7 @@ export default function CheckoutPage() {
   const [couponError, setCouponError] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
   const [discountAmount, setDiscountAmount] = useState(0);
+  const [cashbackMessage, setCashbackMessage] = useState("");
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [locationError, setLocationError] = useState("");
   const [orderType, setOrderType] = useState<"Delivery" | "Takeaway">("Delivery");
@@ -99,31 +100,38 @@ export default function CheckoutPage() {
     }
     
     try {
+      // Build cart items with category for BOGO/combo validation
+      const cartItemsForValidation = cart.map((c: any) => ({
+        menuItemId: c.menuItem.id,
+        name: c.menuItem.name,
+        quantity: c.quantity,
+        price: c.menuItem.price,
+        category: c.menuItem.category,
+      }));
+
       const result = await convex.query(api.offers.validateOffer, {
         code: coupon,
         cartTotal: total,
+        userId: authUserId || undefined,
+        cartItems: cartItemsForValidation,
       });
 
       if (result.valid && result.offer) {
         setAppliedCoupon(result.offer);
         setCouponError("");
+        setDiscountAmount(result.discountAmount || 0);
         
-        let calculatedDiscount = 0;
-        if (result.offer.discountType === "percentage") {
-          calculatedDiscount = (total * result.offer.discountValue) / 100;
+        // Set cashback message if applicable
+        if (result.isCashback && result.cashbackAmount) {
+          setCashbackMessage(`₹${result.cashbackAmount} will be credited to your wallet after delivery!`);
         } else {
-          calculatedDiscount = result.offer.discountValue;
+          setCashbackMessage("");
         }
-        
-        if (result.offer.maxDiscount && calculatedDiscount > result.offer.maxDiscount) {
-          calculatedDiscount = result.offer.maxDiscount;
-        }
-        
-        setDiscountAmount(calculatedDiscount);
       } else {
         setCouponError(result.error || "Invalid coupon");
         setAppliedCoupon(null);
         setDiscountAmount(0);
+        setCashbackMessage("");
       }
     } catch (e) {
       setCouponError("Failed to apply coupon");
@@ -135,6 +143,7 @@ export default function CheckoutPage() {
     setAppliedCoupon(null);
     setDiscountAmount(0);
     setCouponError("");
+    setCashbackMessage("");
   }
 
   function handleGetLocation() {
@@ -253,6 +262,8 @@ export default function CheckoutPage() {
       deliveryLandmark: selectedAddress?.landmark,
       customerPhone: dbUser?.phone,
       orderType,
+      offerType: appliedCoupon?.discountType,
+      cashbackAmount: appliedCoupon?.cashbackAmount,
     });
     
     await clearCart({ userId });
@@ -549,10 +560,33 @@ export default function CheckoutPage() {
                   )}
                 </div>
                 {appliedCoupon && (
-                  <p className="text-xs text-green-600 mt-2 font-medium">
-                    <span className="material-symbols-outlined text-[14px] align-middle mr-1">check_circle</span>
-                    Coupon {appliedCoupon.code} applied. You saved ₹{discountAmount.toFixed(2)}!
-                  </p>
+                  <div className="mt-2 space-y-1">
+                    <p className="text-xs text-green-600 font-medium">
+                      <span className="material-symbols-outlined text-[14px] align-middle mr-1">check_circle</span>
+                      {appliedCoupon.discountType === "cashback"
+                        ? `Coupon ${appliedCoupon.code} applied!`
+                        : `Coupon ${appliedCoupon.code} applied. You saved ₹${discountAmount.toFixed(2)}!`
+                      }
+                    </p>
+                    {cashbackMessage && (
+                      <p className="text-xs text-teal-600 font-medium flex items-center gap-1">
+                        <span className="material-symbols-outlined text-[14px]">account_balance_wallet</span>
+                        {cashbackMessage}
+                      </p>
+                    )}
+                    {appliedCoupon.discountType === "bogo" && (
+                      <p className="text-xs text-purple-600 font-medium flex items-center gap-1">
+                        <span className="material-symbols-outlined text-[14px]">add_shopping_cart</span>
+                        BOGO deal applied!
+                      </p>
+                    )}
+                    {appliedCoupon.discountType === "free_item" && appliedCoupon.freeItemName && (
+                      <p className="text-xs text-amber-600 font-medium flex items-center gap-1">
+                        <span className="material-symbols-outlined text-[14px]">redeem</span>
+                        Free {appliedCoupon.freeItemName} included!
+                      </p>
+                    )}
+                  </div>
                 )}
                 {couponError && (
                   <p className="text-xs text-red-500 mt-1">{couponError}</p>

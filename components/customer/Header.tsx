@@ -27,10 +27,11 @@ export default function CustomerHeader() {
   const cartCount = cartItems ? cartItems.reduce((acc, item) => acc + item.quantity, 0) : 0;
 
   const navLinks = [
-    { label: "Home", href: "/" },
-    { label: "Menu", href: "/menu" },
-    { label: "My Orders", href: "/orders" },
-    { label: "Profile", href: "/profile" },
+    { label: "Home", href: "/", icon: "home" },
+    { label: "Menu", href: "/menu", icon: "restaurant_menu" },
+    { label: "My Orders", href: "/orders", icon: "receipt_long" },
+    { label: "Offers", href: "/offers", icon: "local_offer" },
+    { label: "Profile", href: "/profile", icon: "person" },
   ];
 
   return (
@@ -48,7 +49,7 @@ export default function CustomerHeader() {
         <div className="flex flex-1 justify-end gap-6 sm:gap-8">
           {/* Desktop nav */}
           <nav className="hidden lg:flex items-center gap-8">
-            {navLinks.slice(0, 3).map((link) => (
+            {navLinks.slice(0, 4).map((link) => (
               <Link
                 key={link.href}
                 className={`text-sm font-medium leading-normal transition-colors ${
@@ -61,12 +62,6 @@ export default function CustomerHeader() {
                 {link.label}
               </Link>
             ))}
-            <Link
-              className="text-slate-700 hover:text-primary transition-colors text-sm font-medium leading-normal"
-              href="#"
-            >
-              Offers
-            </Link>
           </nav>
           <div className="flex gap-3 sm:gap-4 items-center">
             {session ? (
@@ -109,6 +104,12 @@ export default function CustomerHeader() {
                       <span className="font-semibold text-sm">My Orders</span>
                     </Link>
                   </DropdownMenuItem>
+                  <DropdownMenuItem asChild className="rounded-xl focus:bg-primary/5 focus:text-primary cursor-pointer">
+                    <Link href="/favourites" className="flex items-center gap-2 w-full px-2 py-2">
+                      <span className="material-symbols-outlined text-[18px]">favorite</span>
+                      <span className="font-semibold text-sm">My Favourites</span>
+                    </Link>
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator className="my-1 bg-slate-100" />
                   <DropdownMenuItem 
                       onClick={() => signOut({ callbackUrl: "/" })}
@@ -128,6 +129,20 @@ export default function CustomerHeader() {
               </button>
             )}
             <div className="h-8 w-px bg-slate-200 hidden sm:block mx-1"></div>
+            {session && (
+              <Link
+                href="/favourites"
+                className={`relative flex cursor-pointer items-center justify-center rounded-xl h-10 w-10 sm:w-12 transition-colors group border border-transparent ${
+                  pathname === "/favourites"
+                    ? "bg-red-50 text-red-500 border-red-200"
+                    : "bg-slate-100/80 hover:bg-red-50 text-slate-700 hover:text-red-500 hover:border-red-100"
+                }`}
+              >
+                <span className="material-symbols-outlined !text-[22px] group-hover:scale-110 transition-transform" style={pathname === "/favourites" ? { fontVariationSettings: "'FILL' 1" } : {}}>
+                  favorite
+                </span>
+              </Link>
+            )}
             <Link
               href="/checkout"
               className="relative flex cursor-pointer items-center justify-center rounded-xl h-10 w-10 sm:w-12 bg-slate-100/80 hover:bg-primary/10 transition-colors text-slate-700 hover:text-primary group border border-transparent hover:border-primary/20"
@@ -175,19 +190,25 @@ export default function CustomerHeader() {
                   }`}
                 >
                   <span className="material-symbols-outlined text-[20px]">
-                    {link.label === "Home" ? "home" : link.label === "Menu" ? "restaurant_menu" : link.label === "My Orders" ? "receipt_long" : "person"}
+                    {link.icon}
                   </span>
                   {link.label}
                 </Link>
               ))}
-              <Link
-                href="#"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors text-sm font-medium text-slate-700 hover:bg-slate-50"
-              >
-                <span className="material-symbols-outlined text-[20px]">local_offer</span>
-                Offers
-              </Link>
+              {session && (
+                <Link
+                  href="/favourites"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors text-sm font-medium ${
+                    pathname === "/favourites"
+                      ? "bg-primary/10 text-primary font-bold"
+                      : "text-slate-700 hover:bg-slate-50"
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-[20px]">favorite</span>
+                  My Favourites
+                </Link>
+              )}
             </nav>
           </div>
         </>

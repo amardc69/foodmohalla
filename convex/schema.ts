@@ -36,14 +36,36 @@ export default defineSchema({
   offers: defineTable({
     code: v.string(),
     description: v.string(),
-    discountType: v.string(), // "percentage" or "flat"
-    discountValue: v.number(),
+    discountType: v.string(), // "percentage" | "flat" | "bogo" | "free_item" | "combo" | "cashback"
+    discountValue: v.number(), // percentage or flat amount (0 for types that don't use it)
     minOrderValue: v.optional(v.number()),
-    maxDiscount: v.optional(v.number()),
-    validUntil: v.optional(v.number()), // timestamp
-    usageLimitPerUser: v.optional(v.number()), // how many times a single user can use it
+    maxDiscount: v.optional(v.number()), // cap for percentage discounts
+    validFrom: v.optional(v.number()), // start timestamp
+    validUntil: v.optional(v.number()), // end timestamp
+    usageLimitPerUser: v.optional(v.number()), // per-user cap
+    totalUsageLimit: v.optional(v.number()), // global cap (e.g., "first 100 users")
+    timesUsed: v.optional(v.number()), // current total usage counter
     isActive: v.boolean(),
+    // BOGO-specific
+    bogoCategory: v.optional(v.string()), // category slug for BOGO
+    bogoItemId: v.optional(v.string()), // specific item ID for BOGO (optional)
+    bogoBuyQty: v.optional(v.number()), // buy X
+    bogoGetQty: v.optional(v.number()), // get Y free
+    // Free Item-specific
+    freeItemId: v.optional(v.string()), // the menu item given free
+    freeItemName: v.optional(v.string()), // display name
+    // Combo-specific
+    comboItemIds: v.optional(v.array(v.string())), // required item IDs
+    // Cashback-specific
+    cashbackAmount: v.optional(v.number()), // flat cashback credited after delivery
   }).index("by_code", ["code"]),
+
+  couponUsages: defineTable({
+    userId: v.string(),
+    offerCode: v.string(),
+    orderId: v.id("orders"),
+    usedAt: v.number(),
+  }).index("by_user_and_code", ["userId", "offerCode"]),
 
   orders: defineTable({
     customer: v.object({
@@ -118,6 +140,7 @@ export default defineSchema({
     phone: v.string(),
     role: v.string(), // "admin" | "customer"
     avatar: v.optional(v.string()),
+    walletBalance: v.optional(v.number()), // cashback credits
   }).index("by_username", ["username"]),
 
   adminSettings: defineTable({

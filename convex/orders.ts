@@ -284,6 +284,8 @@ export const createOrder = mutation({
     deliveryLandmark: v.optional(v.string()),
     customerPhone: v.optional(v.string()), // Added phone
     orderType: v.optional(v.string()),
+    offerType: v.optional(v.string()), // "cashback" etc.
+    cashbackAmount: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     // Try to get customer name from the users table
@@ -324,6 +326,41 @@ export const createOrder = mutation({
       orderType: args.orderType,
       userId: args.userId,
     });
+
+    // Record coupon usage if a coupon was applied
+    if (args.appliedCoupon && args.userId) {
+      await ctx.db.insert("couponUsages", {
+        userId: args.userId,
+        offerCode: args.appliedCoupon,
+        orderId,
+        usedAt: Date.now(),
+      });
+
+      // Increment timesUsed on the offer
+      const offer = await ctx.db
+        .query("offers")
+        .withIndex("by_code", (q) => q.eq("code", args.appliedCoupon!))
+        .first();
+      if (offer) {
+        await ctx.db.patch(offer._id, {
+          timesUsed: (offer.timesUsed || 0) + 1,
+        });
+      }
+
+      // Credit cashback to user wallet if cashback type
+      if (args.offerType === "cashback" && args.cashbackAmount && args.userId) {
+        try {
+          const user = await ctx.db.get(args.userId as any);
+          if (user && "_id" in user) {
+            await ctx.db.patch((user as any)._id, {
+              walletBalance: ((user as any).walletBalance || 0) + args.cashbackAmount,
+            });
+          }
+        } catch {
+          // silently fail cashback credit
+        }
+      }
+    }
 
     return orderId;
   },
