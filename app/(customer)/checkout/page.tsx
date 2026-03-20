@@ -225,7 +225,7 @@ export default function CheckoutPage() {
   }
 
   const currentDeliveryFee = orderType === "Takeaway" ? 0 : (freeDeliveryEnabled && total >= freeDeliveryThreshold ? 0 : DELIVERY_FEE);
-  const grandTotal = total + currentDeliveryFee + TAX_RATE - discountAmount;
+  const grandTotal = Math.max(0, total + currentDeliveryFee + TAX_RATE - discountAmount);
 
   async function placeOrder() {
     if (!userId || cart.length === 0) return;
@@ -614,10 +614,19 @@ export default function CheckoutPage() {
                   <span className="flex items-center gap-1">Taxes &amp; Charges <span className="material-symbols-outlined text-[14px] text-gray-400">info</span></span>
                   <span>₹{TAX_RATE.toFixed(2)}</span>
                 </div>
-                {appliedCoupon && (
+                {appliedCoupon && discountAmount > 0 && (
                   <div className="flex justify-between text-sm text-green-600 font-medium">
                     <span className="flex items-center gap-1">Discount ({appliedCoupon.code})</span>
                     <span>-₹{discountAmount.toFixed(2)}</span>
+                  </div>
+                )}
+                {appliedCoupon && appliedCoupon.discountType === "cashback" && appliedCoupon.cashbackAmount > 0 && (
+                  <div className="flex justify-between text-sm text-teal-600 font-medium">
+                    <span className="flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[14px]">account_balance_wallet</span>
+                      Cashback ({appliedCoupon.code})
+                    </span>
+                    <span>+₹{appliedCoupon.cashbackAmount} after delivery</span>
                   </div>
                 )}
                 <div className="flex justify-between items-center pt-4 mt-2 border-t border-gray-200">
