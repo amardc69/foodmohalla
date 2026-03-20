@@ -54,31 +54,25 @@ export default function FavouritesPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-6 md:py-10">
-      {/* Hero */}
-      <div className="relative bg-gradient-to-br from-red-500 via-rose-500 to-pink-600 rounded-2xl p-8 md:p-12 mb-10 overflow-hidden">
-        <div className="absolute top-0 right-0 w-72 h-72 bg-white/5 rounded-full -mr-24 -mt-24"></div>
-        <div className="absolute bottom-0 left-0 w-56 h-56 bg-white/5 rounded-full -ml-20 -mb-20"></div>
-        <div className="absolute top-1/3 right-1/3 w-24 h-24 bg-white/10 rounded-full blur-2xl"></div>
-
-        <div className="relative z-10">
-          <div className="flex items-center gap-2 mb-3">
+      {/* Header */}
+      <div className="mb-8">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center">
             <span
-              className="material-symbols-outlined text-white/90 text-3xl"
+              className="material-symbols-outlined text-red-500 text-xl"
               style={{ fontVariationSettings: "'FILL' 1" }}
             >
               favorite
             </span>
-            <span className="bg-white/20 text-white text-xs font-bold px-3 py-1 rounded-full backdrop-blur-sm">
-              {favourites ? favourites.length : 0}{" "}
-              {favourites?.length === 1 ? "Item" : "Items"} Saved
-            </span>
           </div>
-          <h1 className="text-3xl md:text-4xl font-black text-white mb-2 tracking-tight">
-            My Favourites
-          </h1>
-          <p className="text-white/80 text-sm md:text-base max-w-md leading-relaxed">
-            Your hand-picked collection of favourite dishes. Quick access to re-order the food you love!
-          </p>
+          <div>
+            <h1 className="text-2xl md:text-3xl font-black text-text-main tracking-tight">
+              My Favourites
+            </h1>
+            <p className="text-sm text-text-muted">
+              {favourites ? `${favourites.length} saved ${favourites.length === 1 ? "item" : "items"}` : "Loading..."}
+            </p>
+          </div>
         </div>
       </div>
 

@@ -1,6 +1,17 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 
+// Helper: remove keys with undefined values (Convex rejects explicit undefined)
+function stripUndefined(obj: Record<string, any>): Record<string, any> {
+  const clean: Record<string, any> = {};
+  for (const [key, val] of Object.entries(obj)) {
+    if (val !== undefined) {
+      clean[key] = val;
+    }
+  }
+  return clean;
+}
+
 // ─── Queries ────────────────────────────────────────────────────────────────
 
 export const getOptions = query({
@@ -206,11 +217,12 @@ export const addOffer = mutation({
     cashbackAmount: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    return await ctx.db.insert("offers", {
+    const data = stripUndefined({
       ...args,
       code: args.code.toUpperCase().replace(/\s+/g, ""),
       timesUsed: 0,
     });
+    return await ctx.db.insert("offers", data as any);
   },
 });
 
@@ -238,7 +250,8 @@ export const updateOffer = mutation({
     cashbackAmount: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const { id, ...updates } = args;
+    const { id, ...rawUpdates } = args;
+    const updates = stripUndefined(rawUpdates);
     if (updates.code) {
       updates.code = updates.code.toUpperCase().replace(/\s+/g, "");
     }
